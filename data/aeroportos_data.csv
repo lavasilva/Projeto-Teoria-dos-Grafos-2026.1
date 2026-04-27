@@ -1,0 +1,21 @@
+iata,cidade,regiao
+REC,Recife,Nordeste
+SSA,Salvador,Nordeste
+FOR,Fortaleza,Nordeste
+NAT,Natal,Nordeste
+JPA,João Pessoa,Nordeste
+GRU,São Paulo,Sudeste
+CGH,São Paulo,Sudeste
+GIG,Rio de Janeiro,Sudeste
+CNF,Belo Horizonte,Sudeste
+VIX,Vitória,Sudeste
+BSB,Brasília,Centro-Oeste
+GYN,Goiânia,Centro-Oeste
+CWB,Curitiba,Sul
+FLN,Florianópolis,Sul
+POA,Porto Alegre,Sul
+MAO,Manaus,Norte
+BEL,Belém,Norte
+PVH,Porto Velho,Norte
+RBR,Rio Branco,Norte
+THE,Teresina,Nordeste

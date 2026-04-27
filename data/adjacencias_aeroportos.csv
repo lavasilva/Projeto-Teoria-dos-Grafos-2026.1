@@ -1,0 +1,24 @@
+origem,destino,tipo_conexao,justificativa,peso
+REC,SSA,regional,"mesma região com hub regional",1.0
+REC,NAT,regional,"mesma região com hub regional",1.0
+REC,JPA,regional,"mesma região com hub regional",1.0
+REC,POA,interregional,"nordeste/sul com dois hubs regionais",1.5
+SSA,FOR,regional,"mesma região",1.5
+SSA,BEL,interregional,"nordeste/norte",3.0
+FOR,MAO,interregional,"nordeste/norte com hub regional",2.0
+JPA,PVH,interregional,"nordeste/norte",3.0
+GRU,REC,interregional,"sudeste/nordeste com dois hub regionais",1.5
+GRU,SSA,interregional,"sudeste/nordeste com hub regional",2.0
+GRU,GIG,regional,"mesma região com hub regional",1.0
+GRU,CNF,regional,"mesma região com hub regional",1.0
+GRU,BSB,interregional,"sudeste/centro-oeste com dois hub regionais",1.5
+GRU,POA,interregional,"sudeste/sul com dois hubs regionais",1.5
+GRU,GYN,interregional,"sudeste/centro-oeste com hub regional",2.0
+CGH,CNF,regional,"mesma região",1.5
+CGH,VIX,regional,"mesma região",1.5
+CGH,FLN,interregional,"sudeste/sul",3.0
+BSB,MAO,interregional,"centro-oeste/norte com dois hubs regionais",1.5
+BSB,THE,interregional,"centro-oeste/norte com hub regional",2.0
+POA,CWB,regional,"mesma região com hub regional",1.0
+POA,FLN,regional,"mesma região com hub regional",1.0
+MAO,RBR,regional,"mesma região com hub regional",1.0
