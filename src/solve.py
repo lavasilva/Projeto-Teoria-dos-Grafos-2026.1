@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from graphs.io import load_graph
 from graphs.graph import Graph
+from graphs.algorithms import dijkstra_path
 
 ROOT     = Path(__file__).parent.parent
 DATA_DIR = ROOT / "data"
@@ -66,6 +67,29 @@ def compute_graus(g: Graph) -> list[dict]:
     return sorted(resultado, key=lambda x: x["grau"], reverse=True)
 
 
+def compute_rotas(g: Graph, rotas_csv: Path) -> list[dict]:
+    if not rotas_csv.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {rotas_csv}")
+
+    resultado = []
+    with rotas_csv.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            origem  = row["origem"].strip()
+            destino = row["destino"].strip()
+            custo, caminho = dijkstra_path(g, origem, destino)
+            caminho_str = " -> ".join(caminho) if caminho else "sem rota"
+            resultado.append({
+                "origem":  origem,
+                "destino": destino,
+                "custo":   round(custo, 4) if custo != float("inf") else "inf",
+                "caminho": caminho_str,
+            })
+            print(f"  {origem} → {destino}: custo={custo:.2f}, "
+                  f"caminho={caminho_str}")
+    return resultado
+
+
 def save_global(data: dict, out_dir: Path) -> None:
     path = out_dir / "global.json"
     with path.open("w", encoding="utf-8") as f:
@@ -100,13 +124,24 @@ def save_graus(data: list[dict], out_dir: Path) -> None:
     print(f"  ✔ {path}")
 
 
+def save_rotas(data: list[dict], out_dir: Path) -> None:
+    path = out_dir / "distancias_rotas.csv"
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["origem", "destino", "custo", "caminho"])
+        writer.writeheader()
+        writer.writerows(data)
+    print(f"  ✔ {path}")
+
+
 def run(
     airports_csv:    Path | None = None,
     adjacencias_csv: Path | None = None,
+    rotas_csv:       Path | None = None,
     out_dir:         Path | None = None,
 ) -> None:
     airports_csv    = airports_csv    or DATA_DIR / "aeroportos_data.csv"
     adjacencias_csv = adjacencias_csv or DATA_DIR / "adjacencias_aeroportos.csv"
+    rotas_csv       = rotas_csv       or DATA_DIR / "rotas.csv"
     out_dir         = out_dir         or OUT_DIR
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -135,20 +170,22 @@ def run(
 
     print("\nCalculando graus e rankings...")
     graus_data = compute_graus(g)
-
     mais_conectado = graus_data[0]
     print(f"  Aeroporto mais conectado: {mais_conectado['aeroporto']} "
           f"(grau={mais_conectado['grau']})")
-
     maior_densidade_ego = max(ego_data, key=lambda x: x["densidade_ego"])
     print(f"  Maior densidade local:    {maior_densidade_ego['aeroporto']} "
           f"(densidade_ego={maior_densidade_ego['densidade_ego']})")
+
+    print("\nCalculando rotas (Dijkstra)...")
+    rotas_data = compute_rotas(g, rotas_csv)
 
     print("\nSalvando arquivos de saída...")
     save_global(global_data, out_dir)
     save_regioes(regioes_data, out_dir)
     save_ego(ego_data, out_dir)
     save_graus(graus_data, out_dir)
+    save_rotas(rotas_data, out_dir)
     print("\nConcluído!")
 
 
