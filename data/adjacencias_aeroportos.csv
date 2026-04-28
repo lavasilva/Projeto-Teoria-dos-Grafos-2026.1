@@ -18,10 +18,10 @@ CGH,CNF,regional,"mesma região",1.5
 CGH,VIX,regional,"mesma região",1.5
 CGH,FLN,interregional,"sudeste/sul",3.0
 BSB,MAO,interregional,"centro-oeste/norte com dois hubs regionais",1.5
-BSB,THE,interregional,"centro-oeste/norte com hub regional",2.0
+BSB,THE,interregional,"centro-oeste/nordeste com hub regional",2.0
 POA,CWB,regional,"mesma região com hub regional",1.0
 POA,FLN,regional,"mesma região com hub regional",1.0
 MAO,RBR,regional,"mesma região com hub regional",1.0
-BSB,GYN,regional,"mesma região Centro-Oeste",1.5
+BSB,GYN,regional,"mesma região Centro-Oeste com hub regional",1.0
 MAO,BEL,regional,"mesma região Norte com hub regional",1.0
 MAO,PVH,regional,"mesma região Norte com hub regional",1.0

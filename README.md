@@ -20,6 +20,8 @@ pip3 install -r requirements.txt
 ---
 
 ## Estrutura de Pastas
+
+```
 projeto-grafos/
 ├── README.md
 ├── requirements.txt
@@ -38,12 +40,11 @@ projeto-grafos/
 │       ├── io.py                    # carregamento e validação dos CSVs
 │       └── algorithms.py            # BFS, DFS, Dijkstra, Bellman-Ford
 └── tests/
-├── test_bfs.py
-├── test_dfs.py
-├── test_dijkstra.py
-└── test_bellman_ford.py\
-
----
+    ├── test_bfs.py
+    ├── test_dfs.py
+    ├── test_dijkstra.py
+    └── test_bellman_ford.py
+```
 
 ## Como Executar
 
