@@ -1,5 +1,6 @@
 from __future__ import annotations
 import sys
+import csv
 from pathlib import Path
 from collections import defaultdict, deque
 
@@ -7,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from graphs.io import load_graph
 from graphs.graph import Graph
-from graphs.algorithms import dijkstra_path, bfs
+from graphs.algorithms import dijkstra_path
 
 try:
     from pyvis.network import Network
@@ -19,7 +20,6 @@ try:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
-    import numpy as np
 except ImportError:
     raise ImportError("Instale matplotlib: pip3 install matplotlib --break-system-packages")
 
@@ -31,13 +31,13 @@ ROTAS_OBRIGATORIAS = [
     ("REC", "POA"),
     ("MAO", "GRU"),
 ]
-ROUTE_COLORS  = ["#e74c3c", "#2980b9"]
+ROUTE_COLORS  = ["#e74c3c", "#00b894"]
 NODE_DEFAULT  = "#95a5a6"
 EDGE_DEFAULT  = "#dfe6e9"
 
 REGIAO_CORES = {
     "Nordeste":     "#e67e22",
-    "Sudeste":      "#2980b9",
+    "Sudeste":      "#1a6fa8",
     "Sul":          "#27ae60",
     "Centro-Oeste": "#8e44ad",
     "Norte":        "#c0392b",
@@ -298,6 +298,7 @@ def viz_bfs_camadas(g: Graph, start: str, out_path: Path) -> None:
     plt.close(fig)
     print(f"  ✔ {out_path}")
 
+
 def viz_densidade_ego(g: Graph, out_path: Path) -> None:
     dados = []
     for node in g.nodes:
@@ -342,7 +343,6 @@ def viz_densidade_ego(g: Graph, out_path: Path) -> None:
 
 
 def viz_custo_rotas(g: Graph, rotas_csv: Path, out_path: Path) -> None:
-    import csv
     pares = []
     with rotas_csv.open(newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
@@ -486,6 +486,263 @@ def viz_hubs_vs_comuns(g: Graph, out_path: Path) -> None:
     print(f"  ✔ {out_path}")
 
 
+def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
+    rotas_info = {}
+    for (orig, dest), color in zip(ROTAS_OBRIGATORIAS, ROUTE_COLORS):
+        custo, caminho = dijkstra_path(g, orig, dest)
+        rotas_info[(orig, dest)] = {"custo": custo, "caminho": caminho, "color": color}
+
+    nos_em_rota: dict[str, str] = {}
+    arestas_em_rota: dict[frozenset, str] = {}
+    for info in rotas_info.values():
+        if info["caminho"]:
+            for node in info["caminho"]:
+                nos_em_rota[node] = info["color"]
+            for i in range(len(info["caminho"]) - 1):
+                key = frozenset([info["caminho"][i], info["caminho"][i+1]])
+                arestas_em_rota[key] = info["color"]
+
+    REGIAO_CORES_VIZ = {
+        "Nordeste":     "#e67e22",
+        "Sudeste":      "#1a6fa8",
+        "Sul":          "#27ae60",
+        "Centro-Oeste": "#8e44ad",
+        "Norte":        "#c0392b",
+    }
+
+    nodes_js = []
+    for node in g.nodes:
+        meta   = g.node_meta.get(node, {})
+        regiao = meta.get("regiao", "")
+        cidade = meta.get("cidade", "")
+        grau   = g.degree(node)
+        d_ego  = round(g.ego_network(node).density(), 4)
+        is_hub = node in HUBS
+        color  = nos_em_rota.get(node, REGIAO_CORES_VIZ.get(regiao, "#95a5a6"))
+        size   = 30 if is_hub else 18
+        star   = "⭐" if is_hub else ""
+        label  = f"{star}{node}\\n{cidade}"
+        title  = (f"<b>{node} — {cidade}</b><br>"
+                  f"Região: {regiao}<br>Grau: {grau}<br>"
+                  f"Densidade ego: {d_ego}<br>"
+                  f"{'⭐ Hub regional' if is_hub else 'Aeroporto comum'}")
+        border = "white" if node in nos_em_rota else "#888"
+        nodes_js.append(
+            f'{{id:"{node}",label:"{label}",title:"{title}",'
+            f'color:{{background:"{color}",border:"{border}"}},'
+            f'size:{size},font:{{size:{13 if is_hub else 10},color:"white",bold:{"true" if is_hub else "false"}}}}}'
+        )
+
+    edges_js = []
+    added: set[frozenset] = set()
+    eid = 0
+    for edge in g.edges:
+        key = frozenset([edge.origem, edge.destino])
+        if key in added:
+            continue
+        added.add(key)
+        in_rota = key in arestas_em_rota
+        color   = arestas_em_rota[key] if in_rota else "#555577"
+        width   = 4 if in_rota else 1.5
+        title   = f"peso={edge.peso} | {edge.tipo_conexao}"
+        edges_js.append(
+            f'{{id:{eid},from:"{edge.origem}",to:"{edge.destino}",'
+            f'color:{{color:"{color}"}},width:{width},'
+            f'title:"{title}",dashes:{"false" if in_rota else "true"}}}'
+        )
+        eid += 1
+
+    nodes_str = "[" + ",\n".join(nodes_js) + "]"
+    edges_str = "[" + ",\n".join(edges_js) + "]"
+
+    # Estado original para reset
+    original_nodes = []
+    for node in g.nodes:
+        meta   = g.node_meta.get(node, {})
+        regiao = meta.get("regiao", "")
+        color  = nos_em_rota.get(node, REGIAO_CORES_VIZ.get(regiao, "#95a5a6"))
+        border = "white" if node in nos_em_rota else "#888"
+        original_nodes.append(f'"{node}":{{background:"{color}",border:"{border}"}}')
+    original_nodes_str = "{" + ",".join(original_nodes) + "}"
+
+    original_edges = []
+    added2: set[frozenset] = set()
+    eid2 = 0
+    for edge in g.edges:
+        key = frozenset([edge.origem, edge.destino])
+        if key in added2:
+            eid2 += 1
+            continue
+        added2.add(key)
+        in_rota = key in arestas_em_rota
+        color   = arestas_em_rota[key] if in_rota else "#555577"
+        width   = 4 if in_rota else 1.5
+        original_edges.append(f'{eid2}:{{color:"{color}",width:{width}}}')
+        eid2 += 1
+    original_edges_str = "{" + ",".join(original_edges) + "}"
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Rede de Aeroportos do Brasil</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
+<style>
+  * {{ margin:0; padding:0; box-sizing:border-box; }}
+  body {{ background:#1a1a2e; font-family:'Segoe UI',sans-serif; overflow:hidden; }}
+  #grafo {{ width:100vw; height:100vh; }}
+  #painel {{
+    position:fixed; top:12px; left:12px; z-index:999;
+    background:rgba(20,20,40,0.95); border-radius:10px;
+    padding:14px 18px; color:white; min-width:230px;
+    border:1px solid #444;
+  }}
+  #painel h3 {{ margin:0 0 10px; font-size:14px; color:#f1c40f; }}
+  .rota-btn {{
+    display:block; width:100%; margin:4px 0;
+    padding:7px 10px; border:none; border-radius:6px;
+    cursor:pointer; font-size:12px; font-weight:bold; color:white; text-align:left;
+  }}
+  .legenda-item {{ display:flex; align-items:center; gap:8px; font-size:11px; margin:3px 0; }}
+  .dot {{ width:12px; height:12px; border-radius:50%; flex-shrink:0; }}
+  .sep {{ border-top:1px solid #444; margin:10px 0; }}
+  #busca {{
+    width:100%; padding:6px 8px; border-radius:6px;
+    border:1px solid #555; background:#2a2a4a;
+    color:white; font-size:12px; margin-bottom:8px;
+  }}
+  #busca::placeholder {{ color:#aaa; }}
+</style>
+</head>
+<body>
+<div id="painel">
+  <h3>🛫 Rede de Aeroportos</h3>
+  <input id="busca" type="text" placeholder="🔍 Buscar (ex: GRU)..." oninput="buscar(this.value)">
+  <div class="sep"></div>
+  <b style="font-size:12px">Caminhos obrigatórios</b><br>
+  <button class="rota-btn" style="background:#e74c3c" onclick="realcarRota('REC','POA','#e74c3c')">🔴 REC → POA (custo 1.50)</button>
+  <button class="rota-btn" style="background:#00b894" onclick="realcarRota('MAO','GRU','#00b894')">🟢 MAO → GRU (custo 3.00)</button>
+  <button class="rota-btn" style="background:#444" onclick="resetar()">⚪ Resetar destaque</button>
+  <div class="sep"></div>
+  <b style="font-size:12px">Regiões</b>
+  <div class="legenda-item"><div class="dot" style="background:#e67e22"></div>Nordeste</div>
+  <div class="legenda-item"><div class="dot" style="background:#1a6fa8"></div>Sudeste</div>
+  <div class="legenda-item"><div class="dot" style="background:#27ae60"></div>Sul</div>
+  <div class="legenda-item"><div class="dot" style="background:#8e44ad"></div>Centro-Oeste</div>
+  <div class="legenda-item"><div class="dot" style="background:#c0392b"></div>Norte</div>
+  <div class="sep"></div>
+  <div style="font-size:10px;color:#aaa">⭐ Nós maiores = hubs regionais<br>— Hover para ver detalhes</div>
+</div>
+<div id="grafo"></div>
+<script>
+const nodesData = {nodes_str};
+const edgesData = {edges_str};
+const origNodes = {original_nodes_str};
+const origEdges = {original_edges_str};
+
+const nodes = new vis.DataSet(nodesData);
+const edges = new vis.DataSet(edgesData);
+const container = document.getElementById("grafo");
+const network = new vis.Network(container, {{nodes, edges}}, {{
+  physics: {{
+    enabled: true,
+    forceAtlas2Based: {{ gravitationalConstant: -50, springLength: 120 }},
+    solver: "forceAtlas2Based",
+    stabilization: {{ iterations: 200 }}
+  }},
+  edges: {{ smooth: {{ type: "continuous" }} }},
+  interaction: {{ hover: true, navigationButtons: true, keyboard: true }}
+}});
+
+const rotas = {{
+  "REC-POA": ["REC","POA"],
+  "MAO-GRU": ["MAO","BSB","GRU"]
+}};
+
+function buscar(val) {{
+  val = val.trim().toUpperCase();
+  if (!val) {{ resetar(); return; }}
+  const updates = [];
+  nodes.forEach(n => {{
+    const match = n.id.toUpperCase().includes(val) ||
+                  n.label.toUpperCase().includes(val);
+    updates.push({{
+      id: n.id,
+      color: match
+        ? {{ background: origNodes[n.id].background, border: "white" }}
+        : {{ background: "#2a2a3a", border: "#333" }},
+      font: {{ color: match ? "white" : "#444" }}
+    }});
+  }});
+  nodes.update(updates);
+}}
+
+function realcarRota(orig, dest, cor) {{
+  resetar();
+  const caminho = rotas[orig + "-" + dest];
+  if (!caminho) return;
+
+  const nodeUpdates = [];
+  nodes.forEach(n => {{
+    const inPath = caminho.includes(n.id);
+    nodeUpdates.push({{
+      id: n.id,
+      color: inPath
+        ? {{ background: cor, border: "white" }}
+        : {{ background: "#2a2a3a", border: "#333" }},
+      font: {{ color: inPath ? "white" : "#444" }}
+    }});
+  }});
+  nodes.update(nodeUpdates);
+
+  const edgeUpdates = [];
+  edges.forEach(e => {{
+    let inRota = false;
+    for (let i = 0; i < caminho.length - 1; i++) {{
+      if ((e.from===caminho[i]&&e.to===caminho[i+1]) ||
+          (e.to===caminho[i]&&e.from===caminho[i+1])) inRota = true;
+    }}
+    edgeUpdates.push({{
+      id: e.id,
+      color: {{ color: inRota ? cor : "#2a2a3a" }},
+      width: inRota ? 5 : 0.5
+    }});
+  }});
+  edges.update(edgeUpdates);
+}}
+
+function resetar() {{
+  document.getElementById("busca").value = "";
+  const nodeUpdates = [];
+  nodes.forEach(n => {{
+    nodeUpdates.push({{
+      id: n.id,
+      color: {{ background: origNodes[n.id].background, border: origNodes[n.id].border }},
+      font: {{ color: "white" }}
+    }});
+  }});
+  nodes.update(nodeUpdates);
+
+  const edgeUpdates = [];
+  edges.forEach(e => {{
+    edgeUpdates.push({{
+      id: e.id,
+      color: {{ color: origEdges[e.id].color }},
+      width: origEdges[e.id].width
+    }});
+  }});
+  edges.update(edgeUpdates);
+}}
+</script>
+</body>
+</html>"""
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html, encoding="utf-8")
+    print(f"  ✔ {out_path}")
+
+
 def run(
     airports_csv:    Path | None = None,
     adjacencias_csv: Path | None = None,
@@ -503,32 +760,35 @@ def run(
     g = load_graph(airports_csv, adjacencias_csv)
     print(f"  {g}")
 
-    print("\n[1/8] Grafo interativo com rotas...")
+    print("\n[1/9] Grafo interativo com rotas...")
     build_viz(g, ROTAS_OBRIGATORIAS, out_dir / "arvore_percurso.html")
 
-    print("\n[2/8] Histograma de distribuição de graus...")
+    print("\n[2/9] Histograma de distribuição de graus...")
     viz_histograma_graus(g, out_dir / "viz_graus_hist.png")
 
-    print("\n[3/8] Ranking de aeroportos por grau...")
+    print("\n[3/9] Ranking de aeroportos por grau...")
     viz_ranking_aeroportos(g, out_dir / "viz_ranking_barras.png")
 
-    print("\n[4/8] Comparação de métricas por região...")
+    print("\n[4/9] Comparação de métricas por região...")
     viz_regioes(g, out_dir / "viz_regioes_barras.png")
 
-    print("\n[5/8] Camadas BFS a partir de GRU...")
+    print("\n[5/9] Camadas BFS a partir de GRU...")
     viz_bfs_camadas(g, "GRU", out_dir / "viz_bfs_camadas.png")
 
-    print("\n[6/8] Densidade ego-network por aeroporto...")
+    print("\n[6/9] Densidade ego-network por aeroporto...")
     viz_densidade_ego(g, out_dir / "viz_densidade_ego.png")
 
-    print("\n[7/8] Custo das rotas (Dijkstra)...")
+    print("\n[7/9] Custo das rotas (Dijkstra)...")
     viz_custo_rotas(g, rotas_csv, out_dir / "viz_custo_rotas.png")
 
-    print("\n[8/8] Proporção de aeroportos por região...")
+    print("\n[8/9] Proporção de aeroportos por região...")
     viz_pizza_regioes(g, out_dir / "viz_pizza_regioes.png")
 
-    print("\n[+] Hubs vs aeroportos comuns...")
+    print("\n[9/9] Hubs vs aeroportos comuns...")
     viz_hubs_vs_comuns(g, out_dir / "viz_hubs_vs_comuns.png")
+
+    print("\n[+] Grafo interativo completo...")
+    viz_grafo_interativo(g, out_dir / "grafo_interativo.html")
 
     print("\nConcluído! Arquivos gerados em out/")
 
