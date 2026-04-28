@@ -1,4 +1,4 @@
-# Projeto Final — Rede de Aeroportos do Brasil
+# Projeto — Rede de Aeroportos do Brasil
 **Teoria dos Grafos — 2026.1**
 
 ## Descrição
