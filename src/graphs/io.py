@@ -1,7 +1,3 @@
-"""
-io.py – Carregamento e validação dos CSVs do projeto.
-"""
-
 from __future__ import annotations
 import csv
 from pathlib import Path
@@ -13,19 +9,6 @@ def load_graph(
     airports_csv: str | Path,
     adjacencias_csv: str | Path,
 ) -> Graph:
-    """
-    Constrói e retorna o Graph a partir dos dois CSVs.
-
-    Parâmetros
-    ----------
-    airports_csv    : caminho para aeroportos_data.csv
-    adjacencias_csv : caminho para adjacencias_aeroportos.csv
-
-    Levanta
-    -------
-    FileNotFoundError – se algum arquivo não existir.
-    ValueError        – se colunas obrigatórias faltarem ou dados forem inválidos.
-    """
     airports_csv    = Path(airports_csv)
     adjacencias_csv = Path(adjacencias_csv)
 
@@ -35,7 +18,6 @@ def load_graph(
 
     g = Graph()
 
-    # ── Nós ──────────────────────────────────────────────────────────
     required_node_cols = {"iata", "cidade", "regiao"}
     with airports_csv.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -49,7 +31,6 @@ def load_graph(
             g.add_node(iata, cidade=row["cidade"].strip(),
                        regiao=row["regiao"].strip())
 
-    # ── Arestas ──────────────────────────────────────────────────────
     required_edge_cols = {"origem", "destino", "tipo_conexao", "justificativa", "peso"}
     with adjacencias_csv.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
