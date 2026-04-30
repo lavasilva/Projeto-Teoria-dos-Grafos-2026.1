@@ -54,7 +54,8 @@ def build_viz(g: Graph, rotas: list[tuple[str, str]], out_path: Path) -> None:
     net.set_options("""
     {
       "physics": { "enabled": true, "stabilization": { "iterations": 150 } },
-      "edges":   { "smooth": { "type": "curvedCW", "roundness": 0.1 } }
+      "edges":   { "smooth": { "type": "curvedCW", "roundness": 0.1 } },
+                    "interaction": { "navigationButtons": true, "keyboard": true }
     }
     """)
 
