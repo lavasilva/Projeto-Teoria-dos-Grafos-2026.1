@@ -290,7 +290,7 @@ def viz_bfs_camadas(g: Graph, start: str, out_path: Path) -> None:
     legendas = [mpatches.Patch(color=palette[i],
                 label=f"Nível {i} ({len(camadas[i])} aeroportos)")
                 for i in sorted(camadas.keys())]
-    ax.legend(handles=legendas, title="Camada BFS", loc="lower right",
+    ax.legend(handles=legendas, title="Camada BFS", loc="upper right",
               fontsize=8, title_fontsize=9)
 
     plt.tight_layout()
@@ -410,6 +410,7 @@ def viz_pizza_regioes(g: Graph, out_path: Path) -> None:
         autopct="%1.0f%%", startangle=140,
         pctdistance=0.75,
         wedgeprops=dict(edgecolor="white", linewidth=2),
+        radius=0.75,
     )
     for t in texts:
         t.set_fontsize(11)
