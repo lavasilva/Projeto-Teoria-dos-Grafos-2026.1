@@ -115,3 +115,9 @@ Todos os algoritmos foram implementados do zero em `src/graphs/algorithms.py`, s
 - **Rota mais curta:** REC → POA (custo 1.5, conexão direta)
 - **Rota mais longa:** BEL → CGH (custo 6.5, 5 escalas)
 - **Região mais densa:** Centro-Oeste (densidade 1.0)
+
+---
+
+## Declaração de IA
+
+IA foi usada para o setup inicial do projeto (conexões entre nós, definição de centros e custos).
