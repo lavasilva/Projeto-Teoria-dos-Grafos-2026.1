@@ -1,0 +1,62 @@
+[
+  {
+    "regiao": "Centro-Oeste",
+    "aeroportos": [
+      "BSB",
+      "GYN"
+    ],
+    "ordem": 2,
+    "tamanho": 1,
+    "densidade": 1.0
+  },
+  {
+    "regiao": "Nordeste",
+    "aeroportos": [
+      "FOR",
+      "JPA",
+      "NAT",
+      "REC",
+      "SSA",
+      "THE"
+    ],
+    "ordem": 6,
+    "tamanho": 4,
+    "densidade": 0.266667
+  },
+  {
+    "regiao": "Norte",
+    "aeroportos": [
+      "BEL",
+      "MAO",
+      "PVH",
+      "RBR"
+    ],
+    "ordem": 4,
+    "tamanho": 3,
+    "densidade": 0.5
+  },
+  {
+    "regiao": "Sudeste",
+    "aeroportos": [
+      "CGH",
+      "CNF",
+      "GIG",
+      "GRU",
+      "VIX"
+    ],
+    "ordem": 5,
+    "tamanho": 4,
+    "densidade": 0.4
+  },
+  {
+    "regiao": "Sul",
+    "aeroportos": [
+      "CWB",
+      "FLN",
+      "POA"
+    ],
+    "ordem": 3,
+    "tamanho": 2,
+    "densidade": 0.666667
+  }
+]

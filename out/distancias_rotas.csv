@@ -1,0 +1,7 @@
+origem,destino,custo,caminho
+MAO,GRU,3.0,MAO -> BSB -> GRU
+REC,POA,1.5,REC -> POA
+BEL,CGH,6.5,BEL -> MAO -> BSB -> GRU -> CNF -> CGH
+FOR,BSB,3.5,FOR -> MAO -> BSB
+CWB,NAT,3.5,CWB -> POA -> REC -> NAT
+GIG,MAO,4.0,GIG -> GRU -> BSB -> MAO
