@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Rede de Aeroportos do Brasil</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1a1a2e; font-family:'Segoe UI',sans-serif; overflow:hidden; }
+  #grafo { width:100vw; height:100vh; }
+  #painel {
+    position:fixed; top:12px; left:12px; z-index:999;
+    background:rgba(20,20,40,0.95); border-radius:10px;
+    padding:14px 18px; color:white; min-width:230px;
+    border:1px solid #444;
+  }
+  #painel h3 { margin:0 0 10px; font-size:14px; color:#f1c40f; }
+  .rota-btn {
+    display:block; width:100%; margin:4px 0;
+    padding:7px 10px; border:none; border-radius:6px;
+    cursor:pointer; font-size:12px; font-weight:bold; color:white; text-align:left;
+  }
+  .legenda-item { display:flex; align-items:center; gap:8px; font-size:11px; margin:3px 0; }
+  .dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .sep { border-top:1px solid #444; margin:10px 0; }
+  #busca {
+    width:100%; padding:6px 8px; border-radius:6px;
+    border:1px solid #555; background:#2a2a4a;
+    color:white; font-size:12px; margin-bottom:8px;
+  }
+  #busca::placeholder { color:#aaa; }
+</style>
+</head>
+<body>
+<div id="painel">
+  <h3>🛫 Rede de Aeroportos</h3>
+  <input id="busca" type="text" placeholder="🔍 Buscar (ex: GRU)..." oninput="buscar(this.value)">
+  <div class="sep"></div>
+  <b style="font-size:12px">Caminhos obrigatórios</b><br>
+  <button class="rota-btn" style="background:#e74c3c" onclick="realcarRota('REC','POA','#e74c3c')">🔴 REC → POA (custo 1.50)</button>
+  <button class="rota-btn" style="background:#00b894" onclick="realcarRota('MAO','GRU','#00b894')">🟢 MAO → GRU (custo 3.00)</button>
+  <button class="rota-btn" style="background:#444" onclick="resetar()">⚪ Resetar destaque</button>
+  <div class="sep"></div>
+  <b style="font-size:12px">Regiões</b>
+  <div class="legenda-item"><div class="dot" style="background:#e67e22"></div>Nordeste</div>
+  <div class="legenda-item"><div class="dot" style="background:#1a6fa8"></div>Sudeste</div>
+  <div class="legenda-item"><div class="dot" style="background:#27ae60"></div>Sul</div>
+  <div class="legenda-item"><div class="dot" style="background:#8e44ad"></div>Centro-Oeste</div>
+  <div class="legenda-item"><div class="dot" style="background:#c0392b"></div>Norte</div>
+  <div class="sep"></div>
+  <div style="font-size:10px;color:#aaa">⭐ Nós maiores = hubs regionais<br>— Hover para ver detalhes</div>
+</div>
+<div id="grafo"></div>
+<script>
+const nodesData = [{id:"REC",label:"⭐REC\nRecife",title:"<b>REC — Recife</b><br>Região: Nordeste<br>Grau: 5<br>Densidade ego: 0.4667<br>⭐ Hub regional",color:{background:"#e74c3c",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"SSA",label:"SSA\nSalvador",title:"<b>SSA — Salvador</b><br>Região: Nordeste<br>Grau: 4<br>Densidade ego: 0.5<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"FOR",label:"FOR\nFortaleza",title:"<b>FOR — Fortaleza</b><br>Região: Nordeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"NAT",label:"NAT\nNatal",title:"<b>NAT — Natal</b><br>Região: Nordeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"JPA",label:"JPA\nJoão Pessoa",title:"<b>JPA — João Pessoa</b><br>Região: Nordeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"GRU",label:"⭐GRU\nSão Paulo",title:"<b>GRU — São Paulo</b><br>Região: Sudeste<br>Grau: 7<br>Densidade ego: 0.3571<br>⭐ Hub regional",color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"CGH",label:"CGH\nSão Paulo",title:"<b>CGH — São Paulo</b><br>Região: Sudeste<br>Grau: 3<br>Densidade ego: 0.5<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"GIG",label:"GIG\nRio de Janeiro",title:"<b>GIG — Rio de Janeiro</b><br>Região: Sudeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"CNF",label:"CNF\nBelo Horizonte",title:"<b>CNF — Belo Horizonte</b><br>Região: Sudeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"VIX",label:"VIX\nVitória",title:"<b>VIX — Vitória</b><br>Região: Sudeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"BSB",label:"⭐BSB\nBrasília",title:"<b>BSB — Brasília</b><br>Região: Centro-Oeste<br>Grau: 4<br>Densidade ego: 0.5<br>⭐ Hub regional",color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"GYN",label:"GYN\nGoiânia",title:"<b>GYN — Goiânia</b><br>Região: Centro-Oeste<br>Grau: 2<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#8e44ad",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"CWB",label:"CWB\nCuritiba",title:"<b>CWB — Curitiba</b><br>Região: Sul<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#27ae60",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"FLN",label:"FLN\nFlorianópolis",title:"<b>FLN — Florianópolis</b><br>Região: Sul<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#27ae60",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"POA",label:"⭐POA\nPorto Alegre",title:"<b>POA — Porto Alegre</b><br>Região: Sul<br>Grau: 4<br>Densidade ego: 0.5<br>⭐ Hub regional",color:{background:"#e74c3c",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"MAO",label:"⭐MAO\nManaus",title:"<b>MAO — Manaus</b><br>Região: Norte<br>Grau: 5<br>Densidade ego: 0.3333<br>⭐ Hub regional",color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"BEL",label:"BEL\nBelém",title:"<b>BEL — Belém</b><br>Região: Norte<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"PVH",label:"PVH\nPorto Velho",title:"<b>PVH — Porto Velho</b><br>Região: Norte<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"RBR",label:"RBR\nRio Branco",title:"<b>RBR — Rio Branco</b><br>Região: Norte<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"THE",label:"THE\nTeresina",title:"<b>THE — Teresina</b><br>Região: Nordeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}}];
+const edgesData = [{id:0,from:"REC",to:"SSA",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:1,from:"REC",to:"NAT",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:2,from:"REC",to:"JPA",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:3,from:"REC",to:"POA",color:{color:"#e74c3c"},width:4,title:"peso=1.5 | interregional",dashes:false},
+{id:4,from:"SSA",to:"FOR",color:{color:"#555577"},width:1.5,title:"peso=1.5 | regional",dashes:true},
+{id:5,from:"SSA",to:"BEL",color:{color:"#555577"},width:1.5,title:"peso=3.0 | interregional",dashes:true},
+{id:6,from:"FOR",to:"MAO",color:{color:"#555577"},width:1.5,title:"peso=2.0 | interregional",dashes:true},
+{id:7,from:"JPA",to:"PVH",color:{color:"#555577"},width:1.5,title:"peso=3.0 | interregional",dashes:true},
+{id:8,from:"GRU",to:"REC",color:{color:"#555577"},width:1.5,title:"peso=1.5 | interregional",dashes:true},
+{id:9,from:"GRU",to:"SSA",color:{color:"#555577"},width:1.5,title:"peso=2.0 | interregional",dashes:true},
+{id:10,from:"GRU",to:"GIG",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:11,from:"GRU",to:"CNF",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:12,from:"GRU",to:"BSB",color:{color:"#00b894"},width:4,title:"peso=1.5 | interregional",dashes:false},
+{id:13,from:"GRU",to:"POA",color:{color:"#555577"},width:1.5,title:"peso=1.5 | interregional",dashes:true},
+{id:14,from:"GRU",to:"GYN",color:{color:"#555577"},width:1.5,title:"peso=2.0 | interregional",dashes:true},
+{id:15,from:"CGH",to:"CNF",color:{color:"#555577"},width:1.5,title:"peso=1.5 | regional",dashes:true},
+{id:16,from:"CGH",to:"VIX",color:{color:"#555577"},width:1.5,title:"peso=1.5 | regional",dashes:true},
+{id:17,from:"CGH",to:"FLN",color:{color:"#555577"},width:1.5,title:"peso=3.0 | interregional",dashes:true},
+{id:18,from:"BSB",to:"MAO",color:{color:"#00b894"},width:4,title:"peso=1.5 | interregional",dashes:false},
+{id:19,from:"BSB",to:"THE",color:{color:"#555577"},width:1.5,title:"peso=2.0 | interregional",dashes:true},
+{id:20,from:"POA",to:"CWB",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:21,from:"POA",to:"FLN",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:22,from:"MAO",to:"RBR",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:23,from:"BSB",to:"GYN",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:24,from:"MAO",to:"BEL",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
+{id:25,from:"MAO",to:"PVH",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true}];
+const origNodes = {"REC":{background:"#e74c3c",border:"white"},"SSA":{background:"#e67e22",border:"#888"},"FOR":{background:"#e67e22",border:"#888"},"NAT":{background:"#e67e22",border:"#888"},"JPA":{background:"#e67e22",border:"#888"},"GRU":{background:"#00b894",border:"white"},"CGH":{background:"#1a6fa8",border:"#888"},"GIG":{background:"#1a6fa8",border:"#888"},"CNF":{background:"#1a6fa8",border:"#888"},"VIX":{background:"#1a6fa8",border:"#888"},"BSB":{background:"#00b894",border:"white"},"GYN":{background:"#8e44ad",border:"#888"},"CWB":{background:"#27ae60",border:"#888"},"FLN":{background:"#27ae60",border:"#888"},"POA":{background:"#e74c3c",border:"white"},"MAO":{background:"#00b894",border:"white"},"BEL":{background:"#c0392b",border:"#888"},"PVH":{background:"#c0392b",border:"#888"},"RBR":{background:"#c0392b",border:"#888"},"THE":{background:"#e67e22",border:"#888"}};
+const origEdges = {0:{color:"#555577",width:1.5},1:{color:"#555577",width:1.5},2:{color:"#555577",width:1.5},3:{color:"#e74c3c",width:4},4:{color:"#555577",width:1.5},5:{color:"#555577",width:1.5},6:{color:"#555577",width:1.5},7:{color:"#555577",width:1.5},8:{color:"#555577",width:1.5},9:{color:"#555577",width:1.5},10:{color:"#555577",width:1.5},11:{color:"#555577",width:1.5},12:{color:"#00b894",width:4},13:{color:"#555577",width:1.5},14:{color:"#555577",width:1.5},15:{color:"#555577",width:1.5},16:{color:"#555577",width:1.5},17:{color:"#555577",width:1.5},18:{color:"#00b894",width:4},19:{color:"#555577",width:1.5},20:{color:"#555577",width:1.5},21:{color:"#555577",width:1.5},22:{color:"#555577",width:1.5},23:{color:"#555577",width:1.5},24:{color:"#555577",width:1.5},25:{color:"#555577",width:1.5}};
+
+const nodes = new vis.DataSet(nodesData);
+const edges = new vis.DataSet(edgesData);
+const container = document.getElementById("grafo");
+const network = new vis.Network(container, {nodes, edges}, {
+  physics: {
+    enabled: true,
+    forceAtlas2Based: { gravitationalConstant: -50, springLength: 120 },
+    solver: "forceAtlas2Based",
+    stabilization: { iterations: 200 }
+  },
+  edges: { smooth: { type: "continuous" } },
+  interaction: { hover: true, navigationButtons: true, keyboard: true }
+});
+
+const rotas = {
+  "REC-POA": ["REC","POA"],
+  "MAO-GRU": ["MAO","BSB","GRU"]
+};
+
+function buscar(val) {
+  val = val.trim().toUpperCase();
+  if (!val) { resetar(); return; }
+  const updates = [];
+  nodes.forEach(n => {
+    const match = n.id.toUpperCase().includes(val) ||
+                  n.label.toUpperCase().includes(val);
+    updates.push({
+      id: n.id,
+      color: match
+        ? { background: origNodes[n.id].background, border: "white" }
+        : { background: "#2a2a3a", border: "#333" },
+      font: { color: match ? "white" : "#444" }
+    });
+  });
+  nodes.update(updates);
+}
+
+function realcarRota(orig, dest, cor) {
+  resetar();
+  const caminho = rotas[orig + "-" + dest];
+  if (!caminho) return;
+
+  const nodeUpdates = [];
+  nodes.forEach(n => {
+    const inPath = caminho.includes(n.id);
+    nodeUpdates.push({
+      id: n.id,
+      color: inPath
+        ? { background: cor, border: "white" }
+        : { background: "#2a2a3a", border: "#333" },
+      font: { color: inPath ? "white" : "#444" }
+    });
+  });
+  nodes.update(nodeUpdates);
+
+  const edgeUpdates = [];
+  edges.forEach(e => {
+    let inRota = false;
+    for (let i = 0; i < caminho.length - 1; i++) {
+      if ((e.from===caminho[i]&&e.to===caminho[i+1]) ||
+          (e.to===caminho[i]&&e.from===caminho[i+1])) inRota = true;
+    }
+    edgeUpdates.push({
+      id: e.id,
+      color: { color: inRota ? cor : "#2a2a3a" },
+      width: inRota ? 5 : 0.5
+    });
+  });
+  edges.update(edgeUpdates);
+}
+
+function resetar() {
+  document.getElementById("busca").value = "";
+  const nodeUpdates = [];
+  nodes.forEach(n => {
+    nodeUpdates.push({
+      id: n.id,
+      color: { background: origNodes[n.id].background, border: origNodes[n.id].border },
+      font: { color: "white" }
+    });
+  });
+  nodes.update(nodeUpdates);
+
+  const edgeUpdates = [];
+  edges.forEach(e => {
+    edgeUpdates.push({
+      id: e.id,
+      color: { color: origEdges[e.id].color },
+      width: origEdges[e.id].width
+    });
+  });
+  edges.update(edgeUpdates);
+}
+</script>
+</body>
+</html>

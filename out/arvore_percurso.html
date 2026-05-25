@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 750px;
+                 background-color: #1e1e2e;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"borderWidth": 3, "color": "#e74c3c", "font": {"bold": true, "color": "white", "size": 13}, "id": "REC", "label": "REC\nRecife", "shape": "dot", "size": 28, "title": "Recife (Nordeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "SSA", "label": "SSA\nSalvador", "shape": "dot", "size": 18, "title": "Salvador (Nordeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "FOR", "label": "FOR\nFortaleza", "shape": "dot", "size": 18, "title": "Fortaleza (Nordeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "NAT", "label": "NAT\nNatal", "shape": "dot", "size": 18, "title": "Natal (Nordeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "JPA", "label": "JPA\nJo\u00e3o Pessoa", "shape": "dot", "size": 18, "title": "Jo\u00e3o Pessoa (Nordeste)"}, {"borderWidth": 3, "color": "#00b894", "font": {"bold": true, "color": "white", "size": 13}, "id": "GRU", "label": "GRU\nS\u00e3o Paulo", "shape": "dot", "size": 28, "title": "S\u00e3o Paulo (Sudeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "CGH", "label": "CGH\nS\u00e3o Paulo", "shape": "dot", "size": 18, "title": "S\u00e3o Paulo (Sudeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "GIG", "label": "GIG\nRio de Janeiro", "shape": "dot", "size": 18, "title": "Rio de Janeiro (Sudeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "CNF", "label": "CNF\nBelo Horizonte", "shape": "dot", "size": 18, "title": "Belo Horizonte (Sudeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "VIX", "label": "VIX\nVit\u00f3ria", "shape": "dot", "size": 18, "title": "Vit\u00f3ria (Sudeste)"}, {"borderWidth": 3, "color": "#00b894", "font": {"bold": true, "color": "white", "size": 13}, "id": "BSB", "label": "BSB\nBras\u00edlia", "shape": "dot", "size": 28, "title": "Bras\u00edlia (Centro-Oeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "GYN", "label": "GYN\nGoi\u00e2nia", "shape": "dot", "size": 18, "title": "Goi\u00e2nia (Centro-Oeste)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "CWB", "label": "CWB\nCuritiba", "shape": "dot", "size": 18, "title": "Curitiba (Sul)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "FLN", "label": "FLN\nFlorian\u00f3polis", "shape": "dot", "size": 18, "title": "Florian\u00f3polis (Sul)"}, {"borderWidth": 3, "color": "#e74c3c", "font": {"bold": true, "color": "white", "size": 13}, "id": "POA", "label": "POA\nPorto Alegre", "shape": "dot", "size": 28, "title": "Porto Alegre (Sul)"}, {"borderWidth": 3, "color": "#00b894", "font": {"bold": true, "color": "white", "size": 13}, "id": "MAO", "label": "MAO\nManaus", "shape": "dot", "size": 28, "title": "Manaus (Norte)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "BEL", "label": "BEL\nBel\u00e9m", "shape": "dot", "size": 18, "title": "Bel\u00e9m (Norte)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "PVH", "label": "PVH\nPorto Velho", "shape": "dot", "size": 18, "title": "Porto Velho (Norte)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "RBR", "label": "RBR\nRio Branco", "shape": "dot", "size": 18, "title": "Rio Branco (Norte)"}, {"color": "#95a5a6", "font": {"color": "white"}, "id": "THE", "label": "THE\nTeresina", "shape": "dot", "size": 18, "title": "Teresina (Nordeste)"}, {"color": "#e74c3c", "font": {"color": "white"}, "id": "__leg_0__", "label": "\u25cf REC\u2192POA\n  custo=1.50", "physics": false, "shape": "box", "size": 20, "x": -600, "y": -300}, {"color": "#00b894", "font": {"color": "white"}, "id": "__leg_1__", "label": "\u25cf MAO\u2192GRU\n  custo=3.00", "physics": false, "shape": "box", "size": 20, "x": -600, "y": -220}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#dfe6e9", "from": "REC", "title": "peso=1.0", "to": "SSA", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "REC", "title": "peso=1.0", "to": "NAT", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "REC", "title": "peso=1.0", "to": "JPA", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "REC", "title": "peso=1.5", "to": "POA", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "SSA", "title": "peso=1.5", "to": "FOR", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "SSA", "title": "peso=3.0", "to": "BEL", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "FOR", "title": "peso=2.0", "to": "MAO", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "JPA", "title": "peso=3.0", "to": "PVH", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "GRU", "title": "peso=1.5", "to": "REC", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "GRU", "title": "peso=2.0", "to": "SSA", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "GRU", "title": "peso=1.0", "to": "GIG", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "GRU", "title": "peso=1.0", "to": "CNF", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "GRU", "title": "peso=1.5", "to": "BSB", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "GRU", "title": "peso=1.5", "to": "POA", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "GRU", "title": "peso=2.0", "to": "GYN", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "CGH", "title": "peso=1.5", "to": "CNF", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "CGH", "title": "peso=1.5", "to": "VIX", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "CGH", "title": "peso=3.0", "to": "FLN", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "BSB", "title": "peso=1.5", "to": "MAO", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "BSB", "title": "peso=2.0", "to": "THE", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "POA", "title": "peso=1.0", "to": "CWB", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "POA", "title": "peso=1.0", "to": "FLN", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "MAO", "title": "peso=1.0", "to": "RBR", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "BSB", "title": "peso=1.0", "to": "GYN", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "MAO", "title": "peso=1.0", "to": "BEL", "width": 1}, {"arrows": "to", "color": "#dfe6e9", "from": "MAO", "title": "peso=1.0", "to": "PVH", "width": 1}, {"arrows": "to", "color": "#e74c3c", "font": {"color": "#e74c3c", "size": 10, "strokeWidth": 0}, "from": "REC", "label": "1", "title": "REC\u2192POA (custo=1.50)", "to": "POA", "width": 5}, {"arrows": "to", "color": "#00b894", "font": {"color": "#00b894", "size": 10, "strokeWidth": 0}, "from": "MAO", "label": "1", "title": "MAO\u2192GRU (custo=3.00)", "to": "BSB", "width": 5}, {"arrows": "to", "color": "#00b894", "font": {"color": "#00b894", "size": 10, "strokeWidth": 0}, "from": "BSB", "label": "2", "title": "MAO\u2192GRU (custo=3.00)", "to": "GRU", "width": 5}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"enabled": true, "stabilization": {"iterations": 150}}, "edges": {"smooth": {"type": "curvedCW", "roundness": 0.1}}, "interaction": {"navigationButtons": true, "keyboard": true}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

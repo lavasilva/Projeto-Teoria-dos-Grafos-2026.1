@@ -1,0 +1,21 @@
+aeroporto,cidade,regiao,grau,ordem_ego,tamanho_ego,densidade_ego
+BEL,Belém,Norte,2,3,2,0.666667
+BSB,Brasília,Centro-Oeste,4,5,5,0.5
+CGH,São Paulo,Sudeste,3,4,3,0.5
+CNF,Belo Horizonte,Sudeste,2,3,2,0.666667
+CWB,Curitiba,Sul,1,2,1,1.0
+FLN,Florianópolis,Sul,2,3,2,0.666667
+FOR,Fortaleza,Nordeste,2,3,2,0.666667
+GIG,Rio de Janeiro,Sudeste,1,2,1,1.0
+GRU,São Paulo,Sudeste,7,8,10,0.357143
+GYN,Goiânia,Centro-Oeste,2,3,3,1.0
+JPA,João Pessoa,Nordeste,2,3,2,0.666667
+MAO,Manaus,Norte,5,6,5,0.333333
+NAT,Natal,Nordeste,1,2,1,1.0
+POA,Porto Alegre,Sul,4,5,5,0.5
+PVH,Porto Velho,Norte,2,3,2,0.666667
+RBR,Rio Branco,Norte,1,2,1,1.0
+REC,Recife,Nordeste,5,6,7,0.466667
+SSA,Salvador,Nordeste,4,5,5,0.5
+THE,Teresina,Nordeste,1,2,1,1.0
+VIX,Vitória,Sudeste,1,2,1,1.0
