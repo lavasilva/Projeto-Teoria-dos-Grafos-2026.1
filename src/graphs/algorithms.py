@@ -70,6 +70,13 @@ def dijkstra(
     if start not in g.adj:
         raise ValueError(f"Nó desconhecido: {start!r}")
 
+    for edge in g.edges:
+        if edge.peso < 0:
+            raise ValueError(
+                f"Dijkstra não suporta pesos negativos: "
+                f"aresta {edge.origem!r}↔{edge.destino!r} tem peso {edge.peso}"
+            )
+
     dist:   Dict[str, float]          = {n: float("inf") for n in g.nodes}
     parent: Dict[str, Optional[str]]  = {n: None for n in g.nodes}
     dist[start] = 0.0
