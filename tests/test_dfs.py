@@ -93,3 +93,36 @@ def test_dfs_real_caminho_valido_arestas():
     for i in range(len(path) - 1):
         assert g.has_edge(path[i], path[i + 1]), \
             f"Aresta inválida no caminho: {path[i]} -> {path[i+1]}"
+
+def _tem_ciclo(g, parent):
+    visited = set()
+    for node, par in parent.items():
+        visited.add(node)
+        for nb in g.neighbors(node):
+            if nb in visited and nb != par:
+                return True
+    return False
+
+
+def test_dfs_detecta_ciclo():
+    g = Graph()
+    for n in ["A", "B", "C"]:
+        g.add_node(n)
+    g.add_edge("A", "B", peso=1.0)
+    g.add_edge("B", "C", peso=1.0)
+    g.add_edge("A", "C", peso=1.0)
+
+    parent = dfs(g, "A")
+    assert _tem_ciclo(g, parent) is True
+
+
+def test_dfs_sem_ciclo_em_arvore():
+    g = Graph()
+    for n in ["A", "B", "C", "D"]:
+        g.add_node(n)
+    g.add_edge("A", "B", peso=1.0)
+    g.add_edge("B", "C", peso=1.0)
+    g.add_edge("C", "D", peso=1.0)
+
+    parent = dfs(g, "A")
+    assert _tem_ciclo(g, parent) is False

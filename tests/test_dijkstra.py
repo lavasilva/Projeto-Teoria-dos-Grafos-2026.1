@@ -115,3 +115,14 @@ def test_dijkstra_real_caminho_valido_arestas():
     for i in range(len(path) - 1):
         assert g.has_edge(path[i], path[i + 1]), \
             f"Aresta inválida: {path[i]} -> {path[i+1]}"
+
+def test_dijkstra_recusa_peso_negativo():
+    g = Graph()
+    for n in ["A", "B", "C"]:
+        g.add_node(n)
+    g.add_edge("A", "B", peso=-1.0)
+    g.add_edge("B", "C", peso=2.0)
+    g.add_edge("A", "C", peso=5.0)
+
+    with pytest.raises(ValueError, match="pesos negativos"):
+        dijkstra(g, "A")
