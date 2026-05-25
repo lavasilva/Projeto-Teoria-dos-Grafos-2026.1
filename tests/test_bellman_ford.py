@@ -126,3 +126,27 @@ def test_bf_real_concorda_dijkstra_todas_rotas():
             custo_dj, _   = dijkstra_path(g, orig, dest)
             assert custo_bf == pytest.approx(custo_dj), \
                 f"{orig}->{dest}: BF={custo_bf}, Dijkstra={custo_dj}"
+
+def test_bf_detecta_ciclo_negativo():
+    g = Graph()
+    for n in ["A", "B", "C"]:
+        g.add_node(n)
+    g.add_edge("A", "B", peso=-3.0)
+    g.add_edge("B", "C", peso=1.0)
+    g.add_edge("A", "C", peso=5.0)
+
+    _, _, neg = bellman_ford(g, "A")
+    assert neg is True
+
+
+def test_bf_path_retorna_none_com_ciclo_negativo():
+    g = Graph()
+    for n in ["A", "B", "C"]:
+        g.add_node(n)
+    g.add_edge("A", "B", peso=-3.0)
+    g.add_edge("B", "C", peso=1.0)
+    g.add_edge("A", "C", peso=5.0)
+
+    _, path, neg = bellman_ford_path(g, "A", "C")
+    assert neg is True
+    assert path is None
