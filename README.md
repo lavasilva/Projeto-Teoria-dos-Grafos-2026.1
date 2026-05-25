@@ -26,9 +26,9 @@ projeto-grafos/
 ├── README.md
 ├── requirements.txt
 ├── data/
-│   ├── aeroportos_data.csv          # dataset fornecido
-│   ├── adjacencias_aeroportos.csv   # arestas construídas pelo grupo
-│   └── rotas.csv                    # pares de aeroportos para cálculo de rotas
+│   ├── aeroportos_data.csv          # lista de aeroportos (código IATA, cidade, região)
+│   ├── adjacencias_aeroportos.csv   # arestas construídas pelo grupo (origem, destino, tipo_conexao, justificativa, peso)
+│   └── rotas.csv                    # pares de aeroportos para cálculo de caminhos mínimos
 ├── out/                             # saídas geradas (.json, .csv, .html, .png)
 │   └── .gitkeep
 ├── src/
@@ -45,6 +45,18 @@ projeto-grafos/
     ├── test_dijkstra.py
     └── test_bellman_ford.py
 ```
+
+---
+
+## Descrição dos Dados
+
+**`data/aeroportos_data.csv`** — dataset fornecido pelo professor com 20 aeroportos brasileiros. Colunas: `iata`, `cidade`, `regiao`.
+
+**`data/adjacencias_aeroportos.csv`** — arestas do grafo construídas pelo grupo. Colunas: `origem`, `destino`, `tipo_conexao`, `justificativa`, `peso`. Cada linha representa uma aresta não-direcionada (o sistema espelha automaticamente).
+
+**`data/rotas.csv`** — 6 pares de aeroportos usados para calcular caminhos mínimos via Dijkstra. Colunas: `origem`, `destino`. Inclui o par obrigatório Manaus → São Paulo (MAO → GRU).
+
+---
 
 ## Como Executar
 
@@ -68,11 +80,40 @@ python3 src/viz.py
 ```
 
 Gera em `out/`:
-- `arvore_percurso.html` — grafo interativo com rotas destacadas
+- `arvore_percurso.html` — grafo interativo com rotas obrigatórias destacadas
+- `grafo_interativo.html` — grafo completo com tooltip, busca e destaques
 - `viz_graus_hist.png` — histograma de distribuição de graus
 - `viz_ranking_barras.png` — ranking de aeroportos por conectividade
 - `viz_regioes_barras.png` — comparação de métricas por região
 - `viz_bfs_camadas.png` — camadas BFS a partir de GRU
+- `viz_densidade_ego.png` — densidade da ego-network por aeroporto
+- `viz_custo_rotas.png` — custo das rotas calculadas
+- `viz_pizza_regioes.png` — proporção de aeroportos por região
+- `viz_hubs_vs_comuns.png` — comparação entre hubs e aeroportos comuns
+
+### Usar a interface de linha de comando (CLI)
+
+```bash
+# ver todos os comandos disponíveis
+python3 src/cli.py --help
+
+# calcular métricas e rotas
+python3 src/cli.py solve
+
+# gerar visualizações
+python3 src/cli.py viz
+
+# executar tudo de uma vez
+python3 src/cli.py all
+
+# calcular rota mínima entre dois aeroportos
+python3 src/cli.py rota MAO GRU
+python3 src/cli.py rota REC POA
+
+# ver informações detalhadas de um aeroporto
+python3 src/cli.py info GRU
+python3 src/cli.py info MAO
+```
 
 ### Rodar os testes
 
@@ -94,7 +135,11 @@ As arestas seguem um modelo híbrido com penalidade por região e por ausência 
 | Hub → cidade fora da região | 2.0 |
 | Cidade → cidade inter-regional (sem hub) | 3.0 |
 
+**Fórmula:** `peso = base + penalidade_regiao + penalidade_hub`
+
 **Hubs regionais:** REC (Nordeste), GRU (Sudeste), POA (Sul), BSB (Centro-Oeste), MAO (Norte)
+
+Pesos negativos não são utilizados na Parte 1. O suporte a pesos negativos e detecção de ciclos negativos está implementado no Bellman-Ford e coberto nos testes.
 
 ---
 
@@ -102,9 +147,9 @@ As arestas seguem um modelo híbrido com penalidade por região e por ausência 
 
 Todos os algoritmos foram implementados do zero em `src/graphs/algorithms.py`, sem uso de bibliotecas externas de grafos (networkx, igraph, graph-tool são proibidos).
 
-- **BFS** — busca em largura, caminho mínimo em número de arestas
-- **DFS** — busca em profundidade iterativa
-- **Dijkstra** — caminho mínimo com pesos não-negativos (heap)
+- **BFS** — busca em largura; retorna caminho mínimo em número de arestas
+- **DFS** — busca em profundidade iterativa (pilha explícita)
+- **Dijkstra** — caminho mínimo com pesos não-negativos via min-heap
 - **Bellman-Ford** — caminho mínimo com suporte a pesos negativos e detecção de ciclos negativos
 
 ---
