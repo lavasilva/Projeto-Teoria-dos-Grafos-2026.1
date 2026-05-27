@@ -515,7 +515,6 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
         "Norte":        "#c0392b",
     }
 
-    # BFS layers a partir de GRU
     bfs_start = "GRU"
     bfs_layer: dict[str, int] = {}
     visited_bfs = {bfs_start}
@@ -528,13 +527,11 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
                 visited_bfs.add(nb)
                 q.append((nb, layer + 1))
 
-    # Métricas globais
     global_ordem   = g.order
     global_tamanho = g.size
     global_density = round(g.density(), 4)
     grau_medio     = round(sum(g.degree(n) for n in g.nodes) / g.order, 2)
 
-    # Métricas por região
     from collections import defaultdict
     regioes_nos: dict[str, list] = defaultdict(list)
     for node in g.nodes:
@@ -595,7 +592,6 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
     nodes_str = "[" + ",\n".join(nodes_js) + "]"
     edges_str = "[" + ",\n".join(edges_js) + "]"
 
-    # Estado original para reset
     original_nodes = []
     for node in g.nodes:
         meta   = g.node_meta.get(node, {})
@@ -621,7 +617,6 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
         eid2 += 1
     original_edges_str = "{" + ",".join(original_edges) + "}"
 
-    # Regioes JS para filtro
     regioes_js_parts = []
     for r, m in regioes_metricas.items():
         cor = REGIAO_CORES_VIZ.get(r, "#95a5a6")
