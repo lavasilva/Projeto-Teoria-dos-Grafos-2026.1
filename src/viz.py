@@ -488,7 +488,10 @@ def viz_hubs_vs_comuns(g: Graph, out_path: Path) -> None:
     print(f"  ✔ {out_path}")
 
 
+
 def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
+    from collections import deque
+
     rotas_info = {}
     for (orig, dest), color in zip(ROTAS_OBRIGATORIAS, ROUTE_COLORS):
         custo, caminho = dijkstra_path(g, orig, dest)
@@ -512,6 +515,37 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
         "Norte":        "#c0392b",
     }
 
+    # BFS layers a partir de GRU
+    bfs_start = "GRU"
+    bfs_layer: dict[str, int] = {}
+    visited_bfs = {bfs_start}
+    q = deque([(bfs_start, 0)])
+    while q:
+        node, layer = q.popleft()
+        bfs_layer[node] = layer
+        for nb in g.neighbors(node):
+            if nb not in visited_bfs:
+                visited_bfs.add(nb)
+                q.append((nb, layer + 1))
+
+    # Métricas globais
+    global_ordem   = g.order
+    global_tamanho = g.size
+    global_density = round(g.density(), 4)
+    grau_medio     = round(sum(g.degree(n) for n in g.nodes) / g.order, 2)
+
+    # Métricas por região
+    from collections import defaultdict
+    regioes_nos: dict[str, list] = defaultdict(list)
+    for node in g.nodes:
+        r = g.node_meta[node].get("regiao", "?")
+        regioes_nos[r].append(node)
+
+    regioes_metricas = {}
+    for r, nos in sorted(regioes_nos.items()):
+        sub = g.induced_subgraph(set(nos))
+        regioes_metricas[r] = {"ordem": sub.order, "tamanho": sub.size, "densidade": round(sub.density(), 4)}
+
     nodes_js = []
     for node in g.nodes:
         meta   = g.node_meta.get(node, {})
@@ -524,13 +558,17 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
         size   = 30 if is_hub else 18
         star   = "⭐" if is_hub else ""
         label  = f"{star}{node}\\n{cidade}"
+        layer  = bfs_layer.get(node, "?")
         title  = (f"<b>{node} — {cidade}</b><br>"
                   f"Região: {regiao}<br>Grau: {grau}<br>"
                   f"Densidade ego: {d_ego}<br>"
+                  f"Camada BFS (GRU): {layer}<br>"
                   f"{'⭐ Hub regional' if is_hub else 'Aeroporto comum'}")
         border = "white" if node in nos_em_rota else "#888"
         nodes_js.append(
             f'{{id:"{node}",label:"{label}",title:"{title}",'
+            f'regiao:"{regiao}",isHub:{"true" if is_hub else "false"},'
+            f'bfsLayer:{bfs_layer.get(node, 99)},'
             f'color:{{background:"{color}",border:"{border}"}},'
             f'size:{size},font:{{size:{13 if is_hub else 10},color:"white",bold:{"true" if is_hub else "false"}}}}}'
         )
@@ -583,6 +621,15 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
         eid2 += 1
     original_edges_str = "{" + ",".join(original_edges) + "}"
 
+    # Regioes JS para filtro
+    regioes_js_parts = []
+    for r, m in regioes_metricas.items():
+        cor = REGIAO_CORES_VIZ.get(r, "#95a5a6")
+        regioes_js_parts.append(
+            f'"{r}":{{cor:"{cor}",ordem:{m["ordem"]},tamanho:{m["tamanho"]},densidade:{m["densidade"]}}}'
+        )
+    regioes_js_str = "{" + ",".join(regioes_js_parts) + "}"
+
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -594,54 +641,104 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
   * {{ margin:0; padding:0; box-sizing:border-box; }}
   body {{ background:#1a1a2e; font-family:'Segoe UI',sans-serif; overflow:hidden; }}
   #grafo {{ width:100vw; height:100vh; }}
+
   #painel {{
     position:fixed; top:12px; left:12px; z-index:999;
-    background:rgba(20,20,40,0.95); border-radius:10px;
-    padding:14px 18px; color:white; min-width:230px;
-    border:1px solid #444;
+    background:rgba(15,15,35,0.97); border-radius:12px;
+    padding:14px 16px; color:white; width:250px;
+    border:1px solid #333; max-height:calc(100vh - 24px);
+    overflow-y:auto;
   }}
   #painel h3 {{ margin:0 0 10px; font-size:14px; color:#f1c40f; }}
   .rota-btn {{
-    display:block; width:100%; margin:4px 0;
+    display:block; width:100%; margin:3px 0;
     padding:7px 10px; border:none; border-radius:6px;
-    cursor:pointer; font-size:12px; font-weight:bold; color:white; text-align:left;
+    cursor:pointer; font-size:11px; font-weight:bold; color:white; text-align:left;
   }}
-  .legenda-item {{ display:flex; align-items:center; gap:8px; font-size:11px; margin:3px 0; }}
-  .dot {{ width:12px; height:12px; border-radius:50%; flex-shrink:0; }}
-  .sep {{ border-top:1px solid #444; margin:10px 0; }}
+  .rota-btn:hover {{ opacity:0.85; }}
+  .regiao-btn {{
+    display:inline-flex; align-items:center; gap:5px;
+    padding:4px 8px; border:none; border-radius:5px;
+    cursor:pointer; font-size:11px; color:white;
+    margin:2px; font-weight:bold;
+  }}
+  .regiao-btn.inactive {{ opacity:0.35; }}
+  .legenda-item {{ display:flex; align-items:center; gap:8px; font-size:11px; margin:2px 0; }}
+  .dot {{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }}
+  .sep {{ border-top:1px solid #333; margin:8px 0; }}
   #busca {{
     width:100%; padding:6px 8px; border-radius:6px;
     border:1px solid #555; background:#2a2a4a;
-    color:white; font-size:12px; margin-bottom:8px;
+    color:white; font-size:12px; margin-bottom:6px;
   }}
-  #busca::placeholder {{ color:#aaa; }}
+  #busca::placeholder {{ color:#888; }}
+  .metrica-box {{
+    background:#1e1e3a; border-radius:7px; padding:8px 10px; margin:4px 0;
+    font-size:11px;
+  }}
+  .metrica-box b {{ color:#f1c40f; font-size:12px; }}
+  .metrica-row {{ display:flex; justify-content:space-between; margin:2px 0; }}
+  .metrica-val {{ color:#7ec8e3; font-weight:bold; }}
+  #info-regiao {{ display:none; }}
+  .section-title {{ font-size:11px; font-weight:bold; color:#aaa; margin:6px 0 4px; text-transform:uppercase; letter-spacing:0.5px; }}
+  #bfs-slider-wrap {{ margin:4px 0; }}
+  #bfs-slider {{ width:100%; accent-color:#f1c40f; }}
+  #bfs-label {{ font-size:11px; color:#aaa; }}
 </style>
 </head>
 <body>
 <div id="painel">
   <h3>🛫 Rede de Aeroportos</h3>
-  <input id="busca" type="text" placeholder="🔍 Buscar (ex: GRU)..." oninput="buscar(this.value)">
+
+  <input id="busca" type="text" placeholder="🔍 Buscar aeroporto (ex: GRU)..." oninput="buscar(this.value)">
+
   <div class="sep"></div>
-  <b style="font-size:12px">Caminhos obrigatórios</b><br>
+  <div class="section-title">Métricas Globais</div>
+  <div class="metrica-box">
+    <div class="metrica-row"><span>Aeroportos (|V|)</span><span class="metrica-val">{global_ordem}</span></div>
+    <div class="metrica-row"><span>Rotas (|E|)</span><span class="metrica-val">{global_tamanho}</span></div>
+    <div class="metrica-row"><span>Densidade</span><span class="metrica-val">{global_density}</span></div>
+    <div class="metrica-row"><span>Grau médio</span><span class="metrica-val">{grau_medio}</span></div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="section-title">Filtrar por Região</div>
+  <div id="filtro-regioes"></div>
+  <div id="info-regiao" class="metrica-box" style="margin-top:6px"></div>
+  <button class="rota-btn" style="background:#333;margin-top:4px" onclick="limparFiltroRegiao()">✕ Limpar filtro</button>
+
+  <div class="sep"></div>
+  <div class="section-title">Camadas BFS a partir de GRU</div>
+  <div id="bfs-slider-wrap">
+    <input type="range" id="bfs-slider" min="0" max="3" value="3" oninput="filtrarBFS(this.value)">
+    <div id="bfs-label">Mostrando todas as camadas</div>
+  </div>
+  <button class="rota-btn" style="background:#333;margin-top:2px" onclick="resetarBFS()">✕ Resetar BFS</button>
+
+  <div class="sep"></div>
+  <div class="section-title">Caminhos Obrigatórios</div>
   <button class="rota-btn" style="background:#e74c3c" onclick="realcarRota('REC','POA','#e74c3c')">🔴 REC → POA (custo 1.50)</button>
   <button class="rota-btn" style="background:#00b894" onclick="realcarRota('MAO','GRU','#00b894')">🟢 MAO → GRU (custo 3.00)</button>
   <button class="rota-btn" style="background:#444" onclick="resetar()">⚪ Resetar destaque</button>
+
   <div class="sep"></div>
-  <b style="font-size:12px">Regiões</b>
+  <div class="section-title">Legenda de Regiões</div>
   <div class="legenda-item"><div class="dot" style="background:#e67e22"></div>Nordeste</div>
   <div class="legenda-item"><div class="dot" style="background:#1a6fa8"></div>Sudeste</div>
   <div class="legenda-item"><div class="dot" style="background:#27ae60"></div>Sul</div>
   <div class="legenda-item"><div class="dot" style="background:#8e44ad"></div>Centro-Oeste</div>
   <div class="legenda-item"><div class="dot" style="background:#c0392b"></div>Norte</div>
-  <div class="sep"></div>
-  <div style="font-size:10px;color:#aaa">⭐ Nós maiores = hubs regionais<br>— Hover para ver detalhes</div>
+  <div style="font-size:10px;color:#666;margin-top:6px">⭐ Nós maiores = hubs regionais<br>Hover nos nós para ver detalhes</div>
 </div>
+
 <div id="grafo"></div>
+
 <script>
 const nodesData = {nodes_str};
 const edgesData = {edges_str};
 const origNodes = {original_nodes_str};
 const origEdges = {original_edges_str};
+const regioesMeta = {regioes_js_str};
 
 const nodes = new vis.DataSet(nodesData);
 const edges = new vis.DataSet(edgesData);
@@ -662,9 +759,132 @@ const rotas = {{
   "MAO-GRU": ["MAO","BSB","GRU"]
 }};
 
+let regiaoAtiva = null;
+let bfsModo = false;
+
+// Monta botões de região
+const filtroDiv = document.getElementById("filtro-regioes");
+Object.entries(regioesMeta).forEach(([r, m]) => {{
+  const btn = document.createElement("button");
+  btn.className = "regiao-btn";
+  btn.id = "btn-regiao-" + r;
+  btn.style.background = m.cor;
+  btn.textContent = r;
+  btn.onclick = () => filtrarRegiao(r);
+  filtroDiv.appendChild(btn);
+}});
+
+function filtrarRegiao(regiao) {{
+  bfsModo = false;
+  document.getElementById("busca").value = "";
+
+  if (regiaoAtiva === regiao) {{
+    limparFiltroRegiao();
+    return;
+  }}
+  regiaoAtiva = regiao;
+
+  // Atualiza botões
+  Object.keys(regioesMeta).forEach(r => {{
+    const btn = document.getElementById("btn-regiao-" + r);
+    if (btn) btn.className = "regiao-btn" + (r === regiao ? "" : " inactive");
+  }});
+
+  // Destaca nós da região
+  const nodeUpdates = [];
+  nodes.forEach(n => {{
+    const match = n.regiao === regiao;
+    nodeUpdates.push({{
+      id: n.id,
+      color: match
+        ? {{ background: origNodes[n.id].background, border: "white" }}
+        : {{ background: "#1e1e2e", border: "#222" }},
+      font: {{ color: match ? "white" : "#333" }}
+    }});
+  }});
+  nodes.update(nodeUpdates);
+
+  // Escurece arestas fora da região
+  const edgeUpdates = [];
+  edges.forEach(e => {{
+    const fromRegiao = nodesData.find(n => n.id === e.from)?.regiao;
+    const toRegiao   = nodesData.find(n => n.id === e.to)?.regiao;
+    const inRegiao   = fromRegiao === regiao && toRegiao === regiao;
+    edgeUpdates.push({{
+      id: e.id,
+      color: {{ color: inRegiao ? origEdges[e.id].color : "#1e1e2e" }},
+      width: inRegiao ? origEdges[e.id].width * 1.5 : 0.3
+    }});
+  }});
+  edges.update(edgeUpdates);
+
+  // Mostra métricas da região
+  const m = regioesMeta[regiao];
+  const infoDiv = document.getElementById("info-regiao");
+  infoDiv.style.display = "block";
+  infoDiv.innerHTML = `<b style="color:${{m.cor}}">${{regiao}}</b><br>
+    <div class="metrica-row"><span>Aeroportos</span><span class="metrica-val">${{m.ordem}}</span></div>
+    <div class="metrica-row"><span>Rotas internas</span><span class="metrica-val">${{m.tamanho}}</span></div>
+    <div class="metrica-row"><span>Densidade</span><span class="metrica-val">${{m.densidade}}</span></div>`;
+}}
+
+function limparFiltroRegiao() {{
+  regiaoAtiva = null;
+  Object.keys(regioesMeta).forEach(r => {{
+    const btn = document.getElementById("btn-regiao-" + r);
+    if (btn) btn.className = "regiao-btn";
+  }});
+  document.getElementById("info-regiao").style.display = "none";
+  resetar();
+}}
+
+function filtrarBFS(val) {{
+  val = parseInt(val);
+  bfsModo = true;
+  regiaoAtiva = null;
+  document.getElementById("busca").value = "";
+  const label = document.getElementById("bfs-label");
+  label.textContent = val === 3 ? "Mostrando todas as camadas" : `Camadas 0 a ${{val}} a partir de GRU`;
+
+  const nodeUpdates = [];
+  nodes.forEach(n => {{
+    const inLayer = n.bfsLayer <= val;
+    nodeUpdates.push({{
+      id: n.id,
+      color: inLayer
+        ? {{ background: origNodes[n.id].background, border: "white" }}
+        : {{ background: "#1e1e2e", border: "#222" }},
+      font: {{ color: inLayer ? "white" : "#333" }}
+    }});
+  }});
+  nodes.update(nodeUpdates);
+
+  const edgeUpdates = [];
+  edges.forEach(e => {{
+    const fromLayer = nodesData.find(n => n.id === e.from)?.bfsLayer ?? 99;
+    const toLayer   = nodesData.find(n => n.id === e.to)?.bfsLayer ?? 99;
+    const inLayer   = fromLayer <= val && toLayer <= val;
+    edgeUpdates.push({{
+      id: e.id,
+      color: {{ color: inLayer ? origEdges[e.id].color : "#1e1e2e" }},
+      width: inLayer ? origEdges[e.id].width : 0.3
+    }});
+  }});
+  edges.update(edgeUpdates);
+}}
+
+function resetarBFS() {{
+  bfsModo = false;
+  document.getElementById("bfs-slider").value = 3;
+  document.getElementById("bfs-label").textContent = "Mostrando todas as camadas";
+  resetar();
+}}
+
 function buscar(val) {{
   val = val.trim().toUpperCase();
   if (!val) {{ resetar(); return; }}
+  bfsModo = false;
+  regiaoAtiva = null;
   const updates = [];
   nodes.forEach(n => {{
     const match = n.id.toUpperCase().includes(val) ||
@@ -673,8 +893,8 @@ function buscar(val) {{
       id: n.id,
       color: match
         ? {{ background: origNodes[n.id].background, border: "white" }}
-        : {{ background: "#2a2a3a", border: "#333" }},
-      font: {{ color: match ? "white" : "#444" }}
+        : {{ background: "#1e1e2e", border: "#222" }},
+      font: {{ color: match ? "white" : "#333" }}
     }});
   }});
   nodes.update(updates);
@@ -692,8 +912,8 @@ function realcarRota(orig, dest, cor) {{
       id: n.id,
       color: inPath
         ? {{ background: cor, border: "white" }}
-        : {{ background: "#2a2a3a", border: "#333" }},
-      font: {{ color: inPath ? "white" : "#444" }}
+        : {{ background: "#1e1e2e", border: "#222" }},
+      font: {{ color: inPath ? "white" : "#333" }}
     }});
   }});
   nodes.update(nodeUpdates);
@@ -707,8 +927,8 @@ function realcarRota(orig, dest, cor) {{
     }}
     edgeUpdates.push({{
       id: e.id,
-      color: {{ color: inRota ? cor : "#2a2a3a" }},
-      width: inRota ? 5 : 0.5
+      color: {{ color: inRota ? cor : "#1e1e2e" }},
+      width: inRota ? 5 : 0.3
     }});
   }});
   edges.update(edgeUpdates);
@@ -716,6 +936,16 @@ function realcarRota(orig, dest, cor) {{
 
 function resetar() {{
   document.getElementById("busca").value = "";
+  bfsModo = false;
+  regiaoAtiva = null;
+  document.getElementById("bfs-slider").value = 3;
+  document.getElementById("bfs-label").textContent = "Mostrando todas as camadas";
+  document.getElementById("info-regiao").style.display = "none";
+  Object.keys(regioesMeta).forEach(r => {{
+    const btn = document.getElementById("btn-regiao-" + r);
+    if (btn) btn.className = "regiao-btn";
+  }});
+
   const nodeUpdates = [];
   nodes.forEach(n => {{
     nodeUpdates.push({{
@@ -743,7 +973,6 @@ function resetar() {{
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
     print(f"  ✔ {out_path}")
-
 
 def run(
     airports_csv:    Path | None = None,

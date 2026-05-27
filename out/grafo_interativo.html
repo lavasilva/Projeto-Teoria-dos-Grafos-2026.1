@@ -9,70 +9,119 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:#1a1a2e; font-family:'Segoe UI',sans-serif; overflow:hidden; }
   #grafo { width:100vw; height:100vh; }
+
   #painel {
     position:fixed; top:12px; left:12px; z-index:999;
-    background:rgba(20,20,40,0.95); border-radius:10px;
-    padding:14px 18px; color:white; min-width:230px;
-    border:1px solid #444;
+    background:rgba(15,15,35,0.97); border-radius:12px;
+    padding:14px 16px; color:white; width:250px;
+    border:1px solid #333; max-height:calc(100vh - 24px);
+    overflow-y:auto;
   }
   #painel h3 { margin:0 0 10px; font-size:14px; color:#f1c40f; }
   .rota-btn {
-    display:block; width:100%; margin:4px 0;
+    display:block; width:100%; margin:3px 0;
     padding:7px 10px; border:none; border-radius:6px;
-    cursor:pointer; font-size:12px; font-weight:bold; color:white; text-align:left;
+    cursor:pointer; font-size:11px; font-weight:bold; color:white; text-align:left;
   }
-  .legenda-item { display:flex; align-items:center; gap:8px; font-size:11px; margin:3px 0; }
-  .dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
-  .sep { border-top:1px solid #444; margin:10px 0; }
+  .rota-btn:hover { opacity:0.85; }
+  .regiao-btn {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:4px 8px; border:none; border-radius:5px;
+    cursor:pointer; font-size:11px; color:white;
+    margin:2px; font-weight:bold;
+  }
+  .regiao-btn.inactive { opacity:0.35; }
+  .legenda-item { display:flex; align-items:center; gap:8px; font-size:11px; margin:2px 0; }
+  .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+  .sep { border-top:1px solid #333; margin:8px 0; }
   #busca {
     width:100%; padding:6px 8px; border-radius:6px;
     border:1px solid #555; background:#2a2a4a;
-    color:white; font-size:12px; margin-bottom:8px;
+    color:white; font-size:12px; margin-bottom:6px;
   }
-  #busca::placeholder { color:#aaa; }
+  #busca::placeholder { color:#888; }
+  .metrica-box {
+    background:#1e1e3a; border-radius:7px; padding:8px 10px; margin:4px 0;
+    font-size:11px;
+  }
+  .metrica-box b { color:#f1c40f; font-size:12px; }
+  .metrica-row { display:flex; justify-content:space-between; margin:2px 0; }
+  .metrica-val { color:#7ec8e3; font-weight:bold; }
+  #info-regiao { display:none; }
+  .section-title { font-size:11px; font-weight:bold; color:#aaa; margin:6px 0 4px; text-transform:uppercase; letter-spacing:0.5px; }
+  #bfs-slider-wrap { margin:4px 0; }
+  #bfs-slider { width:100%; accent-color:#f1c40f; }
+  #bfs-label { font-size:11px; color:#aaa; }
 </style>
 </head>
 <body>
 <div id="painel">
   <h3>🛫 Rede de Aeroportos</h3>
-  <input id="busca" type="text" placeholder="🔍 Buscar (ex: GRU)..." oninput="buscar(this.value)">
+
+  <input id="busca" type="text" placeholder="🔍 Buscar aeroporto (ex: GRU)..." oninput="buscar(this.value)">
+
   <div class="sep"></div>
-  <b style="font-size:12px">Caminhos obrigatórios</b><br>
+  <div class="section-title">Métricas Globais</div>
+  <div class="metrica-box">
+    <div class="metrica-row"><span>Aeroportos (|V|)</span><span class="metrica-val">20</span></div>
+    <div class="metrica-row"><span>Rotas (|E|)</span><span class="metrica-val">26</span></div>
+    <div class="metrica-row"><span>Densidade</span><span class="metrica-val">0.1368</span></div>
+    <div class="metrica-row"><span>Grau médio</span><span class="metrica-val">2.6</span></div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="section-title">Filtrar por Região</div>
+  <div id="filtro-regioes"></div>
+  <div id="info-regiao" class="metrica-box" style="margin-top:6px"></div>
+  <button class="rota-btn" style="background:#333;margin-top:4px" onclick="limparFiltroRegiao()">✕ Limpar filtro</button>
+
+  <div class="sep"></div>
+  <div class="section-title">Camadas BFS a partir de GRU</div>
+  <div id="bfs-slider-wrap">
+    <input type="range" id="bfs-slider" min="0" max="3" value="3" oninput="filtrarBFS(this.value)">
+    <div id="bfs-label">Mostrando todas as camadas</div>
+  </div>
+  <button class="rota-btn" style="background:#333;margin-top:2px" onclick="resetarBFS()">✕ Resetar BFS</button>
+
+  <div class="sep"></div>
+  <div class="section-title">Caminhos Obrigatórios</div>
   <button class="rota-btn" style="background:#e74c3c" onclick="realcarRota('REC','POA','#e74c3c')">🔴 REC → POA (custo 1.50)</button>
   <button class="rota-btn" style="background:#00b894" onclick="realcarRota('MAO','GRU','#00b894')">🟢 MAO → GRU (custo 3.00)</button>
   <button class="rota-btn" style="background:#444" onclick="resetar()">⚪ Resetar destaque</button>
+
   <div class="sep"></div>
-  <b style="font-size:12px">Regiões</b>
+  <div class="section-title">Legenda de Regiões</div>
   <div class="legenda-item"><div class="dot" style="background:#e67e22"></div>Nordeste</div>
   <div class="legenda-item"><div class="dot" style="background:#1a6fa8"></div>Sudeste</div>
   <div class="legenda-item"><div class="dot" style="background:#27ae60"></div>Sul</div>
   <div class="legenda-item"><div class="dot" style="background:#8e44ad"></div>Centro-Oeste</div>
   <div class="legenda-item"><div class="dot" style="background:#c0392b"></div>Norte</div>
-  <div class="sep"></div>
-  <div style="font-size:10px;color:#aaa">⭐ Nós maiores = hubs regionais<br>— Hover para ver detalhes</div>
+  <div style="font-size:10px;color:#666;margin-top:6px">⭐ Nós maiores = hubs regionais<br>Hover nos nós para ver detalhes</div>
 </div>
+
 <div id="grafo"></div>
+
 <script>
-const nodesData = [{id:"REC",label:"⭐REC\nRecife",title:"<b>REC — Recife</b><br>Região: Nordeste<br>Grau: 5<br>Densidade ego: 0.4667<br>⭐ Hub regional",color:{background:"#e74c3c",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
-{id:"SSA",label:"SSA\nSalvador",title:"<b>SSA — Salvador</b><br>Região: Nordeste<br>Grau: 4<br>Densidade ego: 0.5<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"FOR",label:"FOR\nFortaleza",title:"<b>FOR — Fortaleza</b><br>Região: Nordeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"NAT",label:"NAT\nNatal",title:"<b>NAT — Natal</b><br>Região: Nordeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"JPA",label:"JPA\nJoão Pessoa",title:"<b>JPA — João Pessoa</b><br>Região: Nordeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"GRU",label:"⭐GRU\nSão Paulo",title:"<b>GRU — São Paulo</b><br>Região: Sudeste<br>Grau: 7<br>Densidade ego: 0.3571<br>⭐ Hub regional",color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
-{id:"CGH",label:"CGH\nSão Paulo",title:"<b>CGH — São Paulo</b><br>Região: Sudeste<br>Grau: 3<br>Densidade ego: 0.5<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"GIG",label:"GIG\nRio de Janeiro",title:"<b>GIG — Rio de Janeiro</b><br>Região: Sudeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"CNF",label:"CNF\nBelo Horizonte",title:"<b>CNF — Belo Horizonte</b><br>Região: Sudeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"VIX",label:"VIX\nVitória",title:"<b>VIX — Vitória</b><br>Região: Sudeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"BSB",label:"⭐BSB\nBrasília",title:"<b>BSB — Brasília</b><br>Região: Centro-Oeste<br>Grau: 4<br>Densidade ego: 0.5<br>⭐ Hub regional",color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
-{id:"GYN",label:"GYN\nGoiânia",title:"<b>GYN — Goiânia</b><br>Região: Centro-Oeste<br>Grau: 2<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#8e44ad",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"CWB",label:"CWB\nCuritiba",title:"<b>CWB — Curitiba</b><br>Região: Sul<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#27ae60",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"FLN",label:"FLN\nFlorianópolis",title:"<b>FLN — Florianópolis</b><br>Região: Sul<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#27ae60",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"POA",label:"⭐POA\nPorto Alegre",title:"<b>POA — Porto Alegre</b><br>Região: Sul<br>Grau: 4<br>Densidade ego: 0.5<br>⭐ Hub regional",color:{background:"#e74c3c",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
-{id:"MAO",label:"⭐MAO\nManaus",title:"<b>MAO — Manaus</b><br>Região: Norte<br>Grau: 5<br>Densidade ego: 0.3333<br>⭐ Hub regional",color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
-{id:"BEL",label:"BEL\nBelém",title:"<b>BEL — Belém</b><br>Região: Norte<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"PVH",label:"PVH\nPorto Velho",title:"<b>PVH — Porto Velho</b><br>Região: Norte<br>Grau: 2<br>Densidade ego: 0.6667<br>Aeroporto comum",color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"RBR",label:"RBR\nRio Branco",title:"<b>RBR — Rio Branco</b><br>Região: Norte<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
-{id:"THE",label:"THE\nTeresina",title:"<b>THE — Teresina</b><br>Região: Nordeste<br>Grau: 1<br>Densidade ego: 1.0<br>Aeroporto comum",color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}}];
+const nodesData = [{id:"REC",label:"⭐REC\nRecife",title:"<b>REC — Recife</b><br>Região: Nordeste<br>Grau: 5<br>Densidade ego: 0.4667<br>Camada BFS (GRU): 1<br>⭐ Hub regional",regiao:"Nordeste",isHub:true,bfsLayer:1,color:{background:"#e74c3c",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"SSA",label:"SSA\nSalvador",title:"<b>SSA — Salvador</b><br>Região: Nordeste<br>Grau: 4<br>Densidade ego: 0.5<br>Camada BFS (GRU): 1<br>Aeroporto comum",regiao:"Nordeste",isHub:false,bfsLayer:1,color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"FOR",label:"FOR\nFortaleza",title:"<b>FOR — Fortaleza</b><br>Região: Nordeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Nordeste",isHub:false,bfsLayer:2,color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"NAT",label:"NAT\nNatal",title:"<b>NAT — Natal</b><br>Região: Nordeste<br>Grau: 1<br>Densidade ego: 1.0<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Nordeste",isHub:false,bfsLayer:2,color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"JPA",label:"JPA\nJoão Pessoa",title:"<b>JPA — João Pessoa</b><br>Região: Nordeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Nordeste",isHub:false,bfsLayer:2,color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"GRU",label:"⭐GRU\nSão Paulo",title:"<b>GRU — São Paulo</b><br>Região: Sudeste<br>Grau: 7<br>Densidade ego: 0.3571<br>Camada BFS (GRU): 0<br>⭐ Hub regional",regiao:"Sudeste",isHub:true,bfsLayer:0,color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"CGH",label:"CGH\nSão Paulo",title:"<b>CGH — São Paulo</b><br>Região: Sudeste<br>Grau: 3<br>Densidade ego: 0.5<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Sudeste",isHub:false,bfsLayer:2,color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"GIG",label:"GIG\nRio de Janeiro",title:"<b>GIG — Rio de Janeiro</b><br>Região: Sudeste<br>Grau: 1<br>Densidade ego: 1.0<br>Camada BFS (GRU): 1<br>Aeroporto comum",regiao:"Sudeste",isHub:false,bfsLayer:1,color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"CNF",label:"CNF\nBelo Horizonte",title:"<b>CNF — Belo Horizonte</b><br>Região: Sudeste<br>Grau: 2<br>Densidade ego: 0.6667<br>Camada BFS (GRU): 1<br>Aeroporto comum",regiao:"Sudeste",isHub:false,bfsLayer:1,color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"VIX",label:"VIX\nVitória",title:"<b>VIX — Vitória</b><br>Região: Sudeste<br>Grau: 1<br>Densidade ego: 1.0<br>Camada BFS (GRU): 3<br>Aeroporto comum",regiao:"Sudeste",isHub:false,bfsLayer:3,color:{background:"#1a6fa8",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"BSB",label:"⭐BSB\nBrasília",title:"<b>BSB — Brasília</b><br>Região: Centro-Oeste<br>Grau: 4<br>Densidade ego: 0.5<br>Camada BFS (GRU): 1<br>⭐ Hub regional",regiao:"Centro-Oeste",isHub:true,bfsLayer:1,color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"GYN",label:"GYN\nGoiânia",title:"<b>GYN — Goiânia</b><br>Região: Centro-Oeste<br>Grau: 2<br>Densidade ego: 1.0<br>Camada BFS (GRU): 1<br>Aeroporto comum",regiao:"Centro-Oeste",isHub:false,bfsLayer:1,color:{background:"#8e44ad",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"CWB",label:"CWB\nCuritiba",title:"<b>CWB — Curitiba</b><br>Região: Sul<br>Grau: 1<br>Densidade ego: 1.0<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Sul",isHub:false,bfsLayer:2,color:{background:"#27ae60",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"FLN",label:"FLN\nFlorianópolis",title:"<b>FLN — Florianópolis</b><br>Região: Sul<br>Grau: 2<br>Densidade ego: 0.6667<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Sul",isHub:false,bfsLayer:2,color:{background:"#27ae60",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"POA",label:"⭐POA\nPorto Alegre",title:"<b>POA — Porto Alegre</b><br>Região: Sul<br>Grau: 4<br>Densidade ego: 0.5<br>Camada BFS (GRU): 1<br>⭐ Hub regional",regiao:"Sul",isHub:true,bfsLayer:1,color:{background:"#e74c3c",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"MAO",label:"⭐MAO\nManaus",title:"<b>MAO — Manaus</b><br>Região: Norte<br>Grau: 5<br>Densidade ego: 0.3333<br>Camada BFS (GRU): 2<br>⭐ Hub regional",regiao:"Norte",isHub:true,bfsLayer:2,color:{background:"#00b894",border:"white"},size:30,font:{size:13,color:"white",bold:true}},
+{id:"BEL",label:"BEL\nBelém",title:"<b>BEL — Belém</b><br>Região: Norte<br>Grau: 2<br>Densidade ego: 0.6667<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Norte",isHub:false,bfsLayer:2,color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"PVH",label:"PVH\nPorto Velho",title:"<b>PVH — Porto Velho</b><br>Região: Norte<br>Grau: 2<br>Densidade ego: 0.6667<br>Camada BFS (GRU): 3<br>Aeroporto comum",regiao:"Norte",isHub:false,bfsLayer:3,color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"RBR",label:"RBR\nRio Branco",title:"<b>RBR — Rio Branco</b><br>Região: Norte<br>Grau: 1<br>Densidade ego: 1.0<br>Camada BFS (GRU): 3<br>Aeroporto comum",regiao:"Norte",isHub:false,bfsLayer:3,color:{background:"#c0392b",border:"#888"},size:18,font:{size:10,color:"white",bold:false}},
+{id:"THE",label:"THE\nTeresina",title:"<b>THE — Teresina</b><br>Região: Nordeste<br>Grau: 1<br>Densidade ego: 1.0<br>Camada BFS (GRU): 2<br>Aeroporto comum",regiao:"Nordeste",isHub:false,bfsLayer:2,color:{background:"#e67e22",border:"#888"},size:18,font:{size:10,color:"white",bold:false}}];
 const edgesData = [{id:0,from:"REC",to:"SSA",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
 {id:1,from:"REC",to:"NAT",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
 {id:2,from:"REC",to:"JPA",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true},
@@ -101,6 +150,7 @@ const edgesData = [{id:0,from:"REC",to:"SSA",color:{color:"#555577"},width:1.5,t
 {id:25,from:"MAO",to:"PVH",color:{color:"#555577"},width:1.5,title:"peso=1.0 | regional",dashes:true}];
 const origNodes = {"REC":{background:"#e74c3c",border:"white"},"SSA":{background:"#e67e22",border:"#888"},"FOR":{background:"#e67e22",border:"#888"},"NAT":{background:"#e67e22",border:"#888"},"JPA":{background:"#e67e22",border:"#888"},"GRU":{background:"#00b894",border:"white"},"CGH":{background:"#1a6fa8",border:"#888"},"GIG":{background:"#1a6fa8",border:"#888"},"CNF":{background:"#1a6fa8",border:"#888"},"VIX":{background:"#1a6fa8",border:"#888"},"BSB":{background:"#00b894",border:"white"},"GYN":{background:"#8e44ad",border:"#888"},"CWB":{background:"#27ae60",border:"#888"},"FLN":{background:"#27ae60",border:"#888"},"POA":{background:"#e74c3c",border:"white"},"MAO":{background:"#00b894",border:"white"},"BEL":{background:"#c0392b",border:"#888"},"PVH":{background:"#c0392b",border:"#888"},"RBR":{background:"#c0392b",border:"#888"},"THE":{background:"#e67e22",border:"#888"}};
 const origEdges = {0:{color:"#555577",width:1.5},1:{color:"#555577",width:1.5},2:{color:"#555577",width:1.5},3:{color:"#e74c3c",width:4},4:{color:"#555577",width:1.5},5:{color:"#555577",width:1.5},6:{color:"#555577",width:1.5},7:{color:"#555577",width:1.5},8:{color:"#555577",width:1.5},9:{color:"#555577",width:1.5},10:{color:"#555577",width:1.5},11:{color:"#555577",width:1.5},12:{color:"#00b894",width:4},13:{color:"#555577",width:1.5},14:{color:"#555577",width:1.5},15:{color:"#555577",width:1.5},16:{color:"#555577",width:1.5},17:{color:"#555577",width:1.5},18:{color:"#00b894",width:4},19:{color:"#555577",width:1.5},20:{color:"#555577",width:1.5},21:{color:"#555577",width:1.5},22:{color:"#555577",width:1.5},23:{color:"#555577",width:1.5},24:{color:"#555577",width:1.5},25:{color:"#555577",width:1.5}};
+const regioesMeta = {"Centro-Oeste":{cor:"#8e44ad",ordem:2,tamanho:1,densidade:1.0},"Nordeste":{cor:"#e67e22",ordem:6,tamanho:4,densidade:0.2667},"Norte":{cor:"#c0392b",ordem:4,tamanho:3,densidade:0.5},"Sudeste":{cor:"#1a6fa8",ordem:5,tamanho:4,densidade:0.4},"Sul":{cor:"#27ae60",ordem:3,tamanho:2,densidade:0.6667}};
 
 const nodes = new vis.DataSet(nodesData);
 const edges = new vis.DataSet(edgesData);
@@ -121,9 +171,132 @@ const rotas = {
   "MAO-GRU": ["MAO","BSB","GRU"]
 };
 
+let regiaoAtiva = null;
+let bfsModo = false;
+
+// Monta botões de região
+const filtroDiv = document.getElementById("filtro-regioes");
+Object.entries(regioesMeta).forEach(([r, m]) => {
+  const btn = document.createElement("button");
+  btn.className = "regiao-btn";
+  btn.id = "btn-regiao-" + r;
+  btn.style.background = m.cor;
+  btn.textContent = r;
+  btn.onclick = () => filtrarRegiao(r);
+  filtroDiv.appendChild(btn);
+});
+
+function filtrarRegiao(regiao) {
+  bfsModo = false;
+  document.getElementById("busca").value = "";
+
+  if (regiaoAtiva === regiao) {
+    limparFiltroRegiao();
+    return;
+  }
+  regiaoAtiva = regiao;
+
+  // Atualiza botões
+  Object.keys(regioesMeta).forEach(r => {
+    const btn = document.getElementById("btn-regiao-" + r);
+    if (btn) btn.className = "regiao-btn" + (r === regiao ? "" : " inactive");
+  });
+
+  // Destaca nós da região
+  const nodeUpdates = [];
+  nodes.forEach(n => {
+    const match = n.regiao === regiao;
+    nodeUpdates.push({
+      id: n.id,
+      color: match
+        ? { background: origNodes[n.id].background, border: "white" }
+        : { background: "#1e1e2e", border: "#222" },
+      font: { color: match ? "white" : "#333" }
+    });
+  });
+  nodes.update(nodeUpdates);
+
+  // Escurece arestas fora da região
+  const edgeUpdates = [];
+  edges.forEach(e => {
+    const fromRegiao = nodesData.find(n => n.id === e.from)?.regiao;
+    const toRegiao   = nodesData.find(n => n.id === e.to)?.regiao;
+    const inRegiao   = fromRegiao === regiao && toRegiao === regiao;
+    edgeUpdates.push({
+      id: e.id,
+      color: { color: inRegiao ? origEdges[e.id].color : "#1e1e2e" },
+      width: inRegiao ? origEdges[e.id].width * 1.5 : 0.3
+    });
+  });
+  edges.update(edgeUpdates);
+
+  // Mostra métricas da região
+  const m = regioesMeta[regiao];
+  const infoDiv = document.getElementById("info-regiao");
+  infoDiv.style.display = "block";
+  infoDiv.innerHTML = `<b style="color:${m.cor}">${regiao}</b><br>
+    <div class="metrica-row"><span>Aeroportos</span><span class="metrica-val">${m.ordem}</span></div>
+    <div class="metrica-row"><span>Rotas internas</span><span class="metrica-val">${m.tamanho}</span></div>
+    <div class="metrica-row"><span>Densidade</span><span class="metrica-val">${m.densidade}</span></div>`;
+}
+
+function limparFiltroRegiao() {
+  regiaoAtiva = null;
+  Object.keys(regioesMeta).forEach(r => {
+    const btn = document.getElementById("btn-regiao-" + r);
+    if (btn) btn.className = "regiao-btn";
+  });
+  document.getElementById("info-regiao").style.display = "none";
+  resetar();
+}
+
+function filtrarBFS(val) {
+  val = parseInt(val);
+  bfsModo = true;
+  regiaoAtiva = null;
+  document.getElementById("busca").value = "";
+  const label = document.getElementById("bfs-label");
+  label.textContent = val === 3 ? "Mostrando todas as camadas" : `Camadas 0 a ${val} a partir de GRU`;
+
+  const nodeUpdates = [];
+  nodes.forEach(n => {
+    const inLayer = n.bfsLayer <= val;
+    nodeUpdates.push({
+      id: n.id,
+      color: inLayer
+        ? { background: origNodes[n.id].background, border: "white" }
+        : { background: "#1e1e2e", border: "#222" },
+      font: { color: inLayer ? "white" : "#333" }
+    });
+  });
+  nodes.update(nodeUpdates);
+
+  const edgeUpdates = [];
+  edges.forEach(e => {
+    const fromLayer = nodesData.find(n => n.id === e.from)?.bfsLayer ?? 99;
+    const toLayer   = nodesData.find(n => n.id === e.to)?.bfsLayer ?? 99;
+    const inLayer   = fromLayer <= val && toLayer <= val;
+    edgeUpdates.push({
+      id: e.id,
+      color: { color: inLayer ? origEdges[e.id].color : "#1e1e2e" },
+      width: inLayer ? origEdges[e.id].width : 0.3
+    });
+  });
+  edges.update(edgeUpdates);
+}
+
+function resetarBFS() {
+  bfsModo = false;
+  document.getElementById("bfs-slider").value = 3;
+  document.getElementById("bfs-label").textContent = "Mostrando todas as camadas";
+  resetar();
+}
+
 function buscar(val) {
   val = val.trim().toUpperCase();
   if (!val) { resetar(); return; }
+  bfsModo = false;
+  regiaoAtiva = null;
   const updates = [];
   nodes.forEach(n => {
     const match = n.id.toUpperCase().includes(val) ||
@@ -132,8 +305,8 @@ function buscar(val) {
       id: n.id,
       color: match
         ? { background: origNodes[n.id].background, border: "white" }
-        : { background: "#2a2a3a", border: "#333" },
-      font: { color: match ? "white" : "#444" }
+        : { background: "#1e1e2e", border: "#222" },
+      font: { color: match ? "white" : "#333" }
     });
   });
   nodes.update(updates);
@@ -151,8 +324,8 @@ function realcarRota(orig, dest, cor) {
       id: n.id,
       color: inPath
         ? { background: cor, border: "white" }
-        : { background: "#2a2a3a", border: "#333" },
-      font: { color: inPath ? "white" : "#444" }
+        : { background: "#1e1e2e", border: "#222" },
+      font: { color: inPath ? "white" : "#333" }
     });
   });
   nodes.update(nodeUpdates);
@@ -166,8 +339,8 @@ function realcarRota(orig, dest, cor) {
     }
     edgeUpdates.push({
       id: e.id,
-      color: { color: inRota ? cor : "#2a2a3a" },
-      width: inRota ? 5 : 0.5
+      color: { color: inRota ? cor : "#1e1e2e" },
+      width: inRota ? 5 : 0.3
     });
   });
   edges.update(edgeUpdates);
@@ -175,6 +348,16 @@ function realcarRota(orig, dest, cor) {
 
 function resetar() {
   document.getElementById("busca").value = "";
+  bfsModo = false;
+  regiaoAtiva = null;
+  document.getElementById("bfs-slider").value = 3;
+  document.getElementById("bfs-label").textContent = "Mostrando todas as camadas";
+  document.getElementById("info-regiao").style.display = "none";
+  Object.keys(regioesMeta).forEach(r => {
+    const btn = document.getElementById("btn-regiao-" + r);
+    if (btn) btn.className = "regiao-btn";
+  });
+
   const nodeUpdates = [];
   nodes.forEach(n => {
     nodeUpdates.push({
