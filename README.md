@@ -118,6 +118,7 @@ python3 src/cli.py info MAO
 ### Rodar os testes
 
 ```bash
+pip install pytest
 python3 -m pytest tests/
 ```
 
