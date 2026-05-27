@@ -8,14 +8,25 @@ Análise estrutural e algorítmica da rede de aeroportos brasileiros com impleme
 ## Documento do Projeto:
 https://docs.google.com/document/d/1EWGNU9YuuUsdmRpXTztDNzRiARYBJwFfk8IPl3aJzSE/edit?tab=t.0
 
-## Requisitos
+## Instalação
 
-- Python 3.11+
-- Dependências listadas em `requirements.txt`
+- Requisitos: Python 3.11+
+- Clone o repositório e, dentro da pasta do projeto, crie e ative um ambiente virtual antes de instalar as dependências:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate      # macOS/Linux
+# ou: venv\Scripts\activate   # Windows
+```
+
+- em seguida, instale as dependências listadas em `requirements.txt`
 
 ```bash
 pip3 install -r requirements.txt
 ```
+
+- A partir daqui, sempre que abrir um novo terminal, rode source venv/bin/activate antes de executar qualquer comando do projeto.
+
 
 ---
 
