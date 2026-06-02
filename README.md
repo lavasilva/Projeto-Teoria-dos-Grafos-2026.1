@@ -45,6 +45,7 @@ projeto-grafos/
 ├── src/
 │   ├── solve.py                     # métricas globais, por região, ego-networks e rotas
 │   ├── viz.py                       # visualizações analíticas
+    ├── dashboard.py                 # gera out/dashboard.html (dashboard interativo)
 │   ├── cli.py                       # interface de linha de comando
 │   └── graphs/
 │       ├── graph.py                 # estrutura: lista de adjacência
@@ -93,6 +94,7 @@ python3 src/viz.py
 Gera em `out/`:
 - `arvore_percurso.html` — grafo interativo com rotas obrigatórias destacadas
 - `grafo_interativo.html` — grafo completo com tooltip, busca e destaques
+- `dashboard.html` — dashboard analítico interativo (KPIs, gráficos, tabela filtrável)
 - `viz_graus_hist.png` — histograma de distribuição de graus
 - `viz_ranking_barras.png` — ranking de aeroportos por conectividade
 - `viz_regioes_barras.png` — comparação de métricas por região
@@ -101,6 +103,16 @@ Gera em `out/`:
 - `viz_custo_rotas.png` — custo das rotas calculadas
 - `viz_pizza_regioes.png` — proporção de aeroportos por região
 - `viz_hubs_vs_comuns.png` — comparação entre hubs e aeroportos comuns
+
+### Gerar apenas o dashboard
+
+O dashboard pode ser regenerado de forma independente sem rodar o `viz.py` completo. Exige que os arquivos `.csv` e `.json` de `out/` já existam (gerados por `solve.py`):
+
+```bash
+python3 src/dashboard.py
+```
+
+Abre `out/dashboard.html` no navegador para ver KPIs globais, ranking de aeroportos, comparação por região, rotas Dijkstra, ego-networks e tabela filtrável.
 
 ### Usar a interface de linha de comando (CLI)
 

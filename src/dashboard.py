@@ -600,11 +600,11 @@ function buildInsights() {{
   const belCgh = DISTANCIAS.find(d => d.origem==='BEL' && d.destino==='CGH') || DISTANCIAS[0];
 
   const items = [
-    {{ icon:'🏆', title:'Hub dominante', text:`GRU lidera com grau ${{GRAUS[0].grau}}, conectando ${{GRAUS[0].grau}} aeroportos diretamente — mais que qualquer outro nó da rede.` }},
-    {{ icon:'🗺️', title:`Região mais densa`, text:`${{densMax.regiao}} tem densidade ${{densMax.densidade.toFixed(2)}} — todos os seus aeroportos são mutuamente alcançáveis com poucas arestas.` }},
-    {{ icon:'✂️', title:'Rota direta mais barata', text:`REC → POA tem custo 1.5, pois os dois hubs regionais estão conectados diretamente (Hub↔Hub inter-regional).` }},
-    {{ icon:'🔗', title:'Rota mais cara', text:`${{belCgh.origem}} → ${{belCgh.destino}} custa ${{belCgh.custo}} passando por ${{belCgh.caminho.split(' -> ').length-2}} escalas: ${{belCgh.caminho}}.` }},
-    {{ icon:'⭐', title:'Hubs regionais', text:`Os 5 hubs (${{hubsText}}) concentram a maioria das conexões inter-regionais e reduzem o custo médio das rotas.` }},
+    {{title:'Hub dominante', text:`GRU lidera com grau ${{GRAUS[0].grau}}, conectando ${{GRAUS[0].grau}} aeroportos diretamente — mais que qualquer outro nó da rede.` }},
+    {{title:`Região mais densa`, text:`${{densMax.regiao}} tem densidade ${{densMax.densidade.toFixed(2)}} — todos os seus aeroportos são mutuamente alcançáveis com poucas arestas.` }},
+    {{title:'Rota direta mais barata', text:`REC → POA tem custo 1.5, pois os dois hubs regionais estão conectados diretamente (Hub↔Hub inter-regional).` }},
+    {{title:'Rota mais cara', text:`${{belCgh.origem}} → ${{belCgh.destino}} custa ${{belCgh.custo}} passando por ${{belCgh.caminho.split(' -> ').length-2}} escalas: ${{belCgh.caminho}}.` }},
+    {{title:'Hubs regionais', text:`Os 5 hubs (${{hubsText}}) concentram a maioria das conexões inter-regionais e reduzem o custo médio das rotas.` }},
   ];
 
   const strip = document.getElementById('insight-strip');
