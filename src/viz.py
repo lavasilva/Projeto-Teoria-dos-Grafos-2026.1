@@ -690,7 +690,6 @@ def _build_viz_data_js(out_dir: Path) -> str:
     parts = ["const VIZ_DATA = ["]
     for d in VIZ_DESCRIPTIONS:
         img = _encode_img(out_dir / f"{d['key']}.png")
-        # Escapa aspas simples nos textos para não quebrar a string JS
         def esc(s: str) -> str:
             return s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ")
         parts.append(
@@ -843,7 +842,6 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
 
     viz_data_js = _build_viz_data_js(out_path.parent)
 
-    # Gera itens HTML da sidebar dinamicamente
     sidebar_items = ""
     for d in VIZ_DESCRIPTIONS:
         sidebar_items += (
@@ -852,6 +850,24 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
             f'<span class="viz-badge" style="background:{d["cor"]}">{d["tipo"]}</span>'
             f'</div>\n  '
         )
+
+    sorted_nodes = sorted(g.nodes)
+    nodes_options = "".join(
+        f'<option value="{n}">{n} \u2013 {g.node_meta[n].get("cidade", "")} ({g.node_meta[n].get("regiao", "")})</option>'
+        for n in sorted_nodes
+    )
+
+    adj: dict = {}
+    added_adj: set = set()
+    for edge in g.edges:
+        key = frozenset([edge.origem, edge.destino])
+        if key in added_adj:
+            continue
+        added_adj.add(key)
+        adj.setdefault(edge.origem, []).append([edge.destino, edge.peso])
+        adj.setdefault(edge.destino, []).append([edge.origem, edge.peso])
+    import json as _json
+    graph_adj_list = _json.dumps(adj)
 
     html = f"""<!DOCTYPE html>
 <html>
@@ -1076,6 +1092,58 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
   }}
   .viz-insight-box .viz-section-text {{ color:#e2e8f0; }}
 
+  /* ── Dijkstra drawer ── */
+  #dijkstra-drawer {{
+    overflow:hidden;
+    max-height:0;
+    transition:max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s;
+    opacity:0;
+  }}
+  #dijkstra-drawer.open {{
+    max-height:320px;
+    opacity:1;
+  }}
+  .dijk-toggle {{
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; background:none; border:none; cursor:pointer;
+    padding:0; color:inherit;
+  }}
+  .dijk-toggle-icon {{
+    font-size:10px; color:#f1c40f;
+    transition:transform .25s;
+  }}
+  .dijk-toggle.open .dijk-toggle-icon {{ transform:rotate(180deg); }}
+  .dijk-select {{
+    width:100%; padding:6px 8px; border-radius:6px;
+    border:1px solid #555; background:#2a2a4a;
+    color:white; font-size:12px; margin-bottom:5px;
+    appearance:none; cursor:pointer;
+  }}
+  .dijk-select:focus {{ outline:none; border-color:#f1c40f; }}
+  .dijk-run-btn {{
+    width:100%; padding:7px; border:none; border-radius:6px;
+    background:linear-gradient(135deg,#f1c40f,#e67e22);
+    color:#1a1a2e; font-weight:bold; font-size:12px; cursor:pointer;
+    transition:opacity .15s;
+  }}
+  .dijk-run-btn:hover {{ opacity:0.85; }}
+  #dijk-result {{
+    display:none; margin-top:6px;
+    background:#1e1e3a; border-radius:8px; padding:10px 11px;
+    border-left:3px solid #f1c40f; font-size:11px;
+  }}
+  #dijk-path-chips {{
+    display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;
+  }}
+  .dijk-chip {{
+    background:#2a2a4a; border-radius:4px;
+    padding:2px 7px; font-size:10px; font-weight:bold;
+    color:#f1c40f; border:1px solid #f1c40f44;
+  }}
+  .dijk-arrow {{
+    color:#555; font-size:9px; align-self:center;
+  }}
+
   /* scrollbars */
   #viz-sidebar::-webkit-scrollbar,
   #viz-modal::-webkit-scrollbar,
@@ -1135,6 +1203,28 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
   <button class="rota-btn" style="background:#00b894" onclick="realcarRota('MAO','GRU','#00b894')">🟢 MAO → GRU (custo 3.00)</button>
   <button class="rota-btn" style="background:#444" onclick="resetar()">⚪ Resetar destaque</button>
   <a href="arvore_percurso.html" target="_blank" class="rota-btn" style="background:#2d2d50;border:1px solid #555;margin-top:6px;text-decoration:none;display:block;text-align:left;">🌳 Ver árvore de percurso</a>
+
+  <div class=\"sep\"></div>
+  <div class=\"section-title\">
+    <button class=\"dijk-toggle\" id=\"dijk-toggle-btn\" onclick=\"toggleDijkstra()\">
+      <span>&#128333; Rota Dijkstra</span>
+      <span class=\"dijk-toggle-icon\">&#9660;</span>
+    </button>
+  </div>
+  <div id=\"dijkstra-drawer\">
+    <div style=\"margin-top:4px\">
+      <div style=\"font-size:10px;color:#aaa;margin-bottom:3px\">Origem</div>
+      <select id=\"dijk-orig\" class=\"dijk-select\">{nodes_options}</select>
+      <div style=\"font-size:10px;color:#aaa;margin-bottom:3px;margin-top:5px\">Destino</div>
+      <select id=\"dijk-dest\" class=\"dijk-select\">{nodes_options}</select>
+      <button class=\"dijk-run-btn\" onclick=\"calcularDijkstra()\">&#128270; Calcular menor caminho</button>
+      <div id=\"dijk-result\">
+        <div id=\"dijk-custo\" style=\"color:#f1c40f;font-weight:bold;margin-bottom:4px\"></div>
+        <div style=\"color:#aaa;font-size:10px;margin-bottom:3px\">Caminho:</div>
+        <div id=\"dijk-path-chips\"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="sep"></div>
   <div class="section-title">Legenda de Regiões</div>
@@ -1444,6 +1534,129 @@ function resetar() {{
       id: e.id,
       color: {{ color: origEdges[e.id].color }},
       width: origEdges[e.id].width
+    }});
+  }});
+  edges.update(edgeUpdates);
+}}
+
+// Dijkstra interativo 
+const graphAdjList = {graph_adj_list};
+
+function toggleDijkstra() {{
+  const drawer = document.getElementById('dijkstra-drawer');
+  const btn    = document.getElementById('dijk-toggle-btn');
+  const isOpen = drawer.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  if (!isOpen) {{
+    document.getElementById('dijk-result').style.display = 'none';
+  }}
+}}
+
+function dijkstraClient(orig, dest) {{
+  const dist = {{}};
+  const prev = {{}};
+  const visited = new Set();
+  for (const n of Object.keys(graphAdjList)) {{
+    dist[n] = Infinity;
+  }}
+  dist[orig] = 0;
+  // Simple O(n^2) priority queue (small graph)
+  while (true) {{
+    let u = null;
+    for (const n of Object.keys(dist)) {{
+      if (!visited.has(n) && (u === null || dist[n] < dist[u])) u = n;
+    }}
+    if (u === null || dist[u] === Infinity || u === dest) break;
+    visited.add(u);
+    for (const [neighbor, weight] of (graphAdjList[u] || [])) {{
+      const alt = dist[u] + weight;
+      if (alt < dist[neighbor]) {{
+        dist[neighbor] = alt;
+        prev[neighbor] = u;
+      }}
+    }}
+  }}
+  if (dist[dest] === Infinity) return null;
+  const path = [];
+  let cur = dest;
+  while (cur !== undefined) {{
+    path.unshift(cur);
+    cur = prev[cur];
+  }}
+  return {{ custo: dist[dest], caminho: path }};
+}}
+
+function calcularDijkstra() {{
+  const orig = document.getElementById('dijk-orig').value;
+  const dest = document.getElementById('dijk-dest').value;
+  const resDiv = document.getElementById('dijk-result');
+
+  if (orig === dest) {{
+    resDiv.style.display = 'block';
+    document.getElementById('dijk-custo').textContent = 'Origem e destino iguais!';
+    document.getElementById('dijk-path-chips').innerHTML = '';
+    return;
+  }}
+
+  const result = dijkstraClient(orig, dest);
+  resDiv.style.display = 'block';
+
+  if (!result) {{
+    document.getElementById('dijk-custo').textContent = 'Nenhum caminho encontrado.';
+    document.getElementById('dijk-path-chips').innerHTML = '';
+    return;
+  }}
+
+  document.getElementById('dijk-custo').textContent =
+    `Custo total: ${{result.custo.toFixed(2)}} · ${{result.caminho.length - 1}} escala(s)`;
+
+  // Renderiza chips
+  const chipsDiv = document.getElementById('dijk-path-chips');
+  chipsDiv.innerHTML = '';
+  result.caminho.forEach((n, i) => {{
+    if (i > 0) {{
+      const arr = document.createElement('span');
+      arr.className = 'dijk-arrow';
+      arr.textContent = '→';
+      chipsDiv.appendChild(arr);
+    }}
+    const chip = document.createElement('span');
+    chip.className = 'dijk-chip';
+    chip.textContent = n;
+    chipsDiv.appendChild(chip);
+  }});
+
+  // Destaca o caminho no grafo
+  realcarRotaCustom(result.caminho, '#a29bfe');
+}}
+
+function realcarRotaCustom(caminho, cor) {{
+  resetar();
+  const nodeUpdates = [];
+  nodes.forEach(n => {{
+    const inPath = caminho.includes(n.id);
+    nodeUpdates.push({{
+      id: n.id,
+      color: inPath
+        ? {{ background: cor, border: 'white' }}
+        : {{ background: '#1e1e2e', border: '#222' }},
+      font: {{ color: inPath ? 'white' : '#333' }}
+    }});
+  }});
+  nodes.update(nodeUpdates);
+
+  const edgeUpdates = [];
+  edges.forEach(e => {{
+    let inRota = false;
+    for (let i = 0; i < caminho.length - 1; i++) {{
+      if ((e.from===caminho[i]&&e.to===caminho[i+1]) ||
+          (e.to===caminho[i]&&e.from===caminho[i+1])) inRota = true;
+    }}
+    edgeUpdates.push({{
+      id: e.id,
+      color: {{ color: inRota ? cor : '#1e1e2e' }},
+      width: inRota ? 5 : 0.3,
+      dashes: false
     }});
   }});
   edges.update(edgeUpdates);
