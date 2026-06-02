@@ -1721,6 +1721,13 @@ def run(
     print("\n[+] Grafo interativo completo...")
     viz_grafo_interativo(g, out_dir / "grafo_interativo.html")
 
+    print("\n[+] Dashboard analítico...")
+    try:
+        from dashboard import generate_dashboard
+        generate_dashboard(data_dir=airports_csv.parent, out_dir=out_dir)
+    except Exception as e:
+        print(f"  [aviso] Dashboard não gerado: {e}")
+
     print("\nConcluído! Arquivos gerados em out/")
 
 
