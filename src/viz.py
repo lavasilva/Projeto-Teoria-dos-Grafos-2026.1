@@ -1243,6 +1243,11 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
 <div id="viz-sidebar">
   <h3>📊 Visualizações</h3>
   {sidebar_items}
+  <div style="margin-top:10px;border-top:1px solid #252636;padding-top:10px;">
+    <a href="dashboard.html" style="display:block;padding:9px 12px;background:linear-gradient(135deg,rgba(241,196,15,.18),rgba(126,200,227,.1));border:1px solid rgba(241,196,15,.35);border-radius:8px;color:#f1c40f;font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:700;text-decoration:none;text-align:center;transition:opacity .15s;" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+      📈 Abrir Dashboard Analítico
+    </a>
+  </div>
 </div>
 
 <!-- Popup overlay -->
