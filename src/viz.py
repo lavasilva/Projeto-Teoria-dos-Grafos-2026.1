@@ -1123,6 +1123,7 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
   <button class="rota-btn" style="background:#e74c3c" onclick="realcarRota('REC','POA','#e74c3c')">🔴 REC → POA (custo 1.50)</button>
   <button class="rota-btn" style="background:#00b894" onclick="realcarRota('MAO','GRU','#00b894')">🟢 MAO → GRU (custo 3.00)</button>
   <button class="rota-btn" style="background:#444" onclick="resetar()">⚪ Resetar destaque</button>
+  <a href="arvore_percurso.html" target="_blank" class="rota-btn" style="background:#2d2d50;border:1px solid #555;margin-top:6px;text-decoration:none;display:block;text-align:left;">🌳 Ver árvore de percurso</a>
 
   <div class="sep"></div>
   <div class="section-title">Legenda de Regiões</div>
