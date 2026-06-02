@@ -610,7 +610,6 @@ function buildInsights() {{
   const strip = document.getElementById('insight-strip');
   items.forEach(i => {{
     strip.innerHTML += `<div class="insight-item">
-      <div class="insight-icon">${{i.icon}}</div>
       <div class="insight-text"><strong>${{i.title}}</strong>${{i.text}}</div>
     </div>`;
   }});
