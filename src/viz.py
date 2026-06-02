@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sys
 import csv
+import base64
 from pathlib import Path
 from collections import defaultdict, deque
 
@@ -489,6 +490,221 @@ def viz_hubs_vs_comuns(g: Graph, out_path: Path) -> None:
 
 
 
+VIZ_DESCRIPTIONS = [
+    {
+        "key":    "viz_graus_hist",
+        "titulo": "Histograma de Graus",
+        "tipo":   "Exploratória",
+        "cor":    "#3b82f6",
+        "o_que":  (
+            "O histograma mostra a frequência de ocorrência de cada valor de grau na rede, "
+            "ou seja, quantos aeroportos possuem cada número de conexões diretas. O eixo "
+            "horizontal representa o grau e o eixo vertical a quantidade de aeroportos com "
+            "aquele grau. Cada barra corresponde a um valor de grau observado na rede: 1, 2, 3, 4, 5 e 7."
+        ),
+        "insight": (
+            "A distribuição é fortemente assimétrica à direita: 13 dos 20 aeroportos possuem "
+            "grau 1 ou 2, enquanto apenas três aeroportos (GRU com grau 7, MAO e REC com grau 5) "
+            "concentram a maior parte das conexões da rede. Esse padrão é característico de redes "
+            "hub-and-spoke, onde poucos nós centralizam a conectividade e a maioria dos nós são "
+            "periféricos, dependentes desses hubs para alcançar o restante da rede."
+        ),
+        "por_que": (
+            "O histograma é o tipo canônico para distribuições de frequência de variáveis discretas. "
+            "A escolha de uma única cor para todas as barras aplica o princípio de pregnância: o dado "
+            "relevante é a altura de cada barra, não a distinção entre elas. A escala do eixo vertical "
+            "começa em zero, boa prática obrigatória em histogramas de frequência para evitar distorção visual."
+        ),
+    },
+    {
+        "key":    "viz_bfs_camadas",
+        "titulo": "Camadas BFS a partir de GRU",
+        "tipo":   "Exploratória",
+        "cor":    "#3b82f6",
+        "o_que":  (
+            "O gráfico de barras horizontais mostra a distância em número de saltos de cada aeroporto "
+            "até GRU (São Paulo/Guarulhos), calculada pelo algoritmo de Busca em Largura (BFS). "
+            "As barras são coloridas por nível: azul (nível 0), verde (nível 1), laranja (nível 2) e roxo (nível 3)."
+        ),
+        "insight": (
+            "Sete aeroportos estão a apenas 1 salto de GRU (BSB, CNF, GIG, GYN, POA, REC e SSA). "
+            "Nove aeroportos estão a 2 saltos, e três (PVH, RBR e VIX) estão a 3 saltos, sendo os "
+            "mais periféricos da rede. A partir do maior hub, qualquer aeroporto pode ser alcançado "
+            "em no máximo 3 escalas. PVH e RBR dependem de MAO como hub intermediário, configurando "
+            "uma cadeia de dependência característica de aeroportos em regiões geograficamente distantes."
+        ),
+        "por_que": (
+            "Barras horizontais foram escolhidas porque os rótulos dos aeroportos são longos e "
+            "ficariam ilegíveis em barras verticais. A lei da proximidade é aplicada pelo agrupamento "
+            "natural por nível, e a lei da similaridade pela cor — a mesma cor significa o mesmo nível de distância."
+        ),
+    },
+    {
+        "key":    "viz_ranking_barras",
+        "titulo": "Ranking por Número de Conexões",
+        "tipo":   "Explanatória",
+        "cor":    "#f59e0b",
+        "o_que":  (
+            "O gráfico de barras horizontais mostra todos os 20 aeroportos ordenados do mais ao menos "
+            "conectado, em ordem decrescente de grau. A cor de cada barra indica a região geográfica "
+            "a que pertence. Os valores de grau são anotados ao final de cada barra para leitura direta."
+        ),
+        "insight": (
+            "GRU domina isoladamente com grau 7, um valor 40% superior ao segundo colocado (REC e MAO, grau 5). "
+            "As três primeiras posições pertencem a regiões diferentes (Sudeste, Nordeste e Norte), revelando "
+            "que a rede não concentra sua hierarquia em uma única região. Os seis aeroportos com grau 1 formam "
+            "um cluster periférico claramente identificável, evidenciando que mais de 30% dos aeroportos são nós folha."
+        ),
+        "por_que": (
+            "O ranking em barras horizontais é uma visualização explanatória por excelência: comunica "
+            "hierarquia de forma imediata. A lei da continuidade é aplicada pela ordenação decrescente; "
+            "a lei da similaridade pela cor regional. O uso de cor como segunda dimensão informacional "
+            "comunica duas variáveis (grau e região) em uma única visualização."
+        ),
+    },
+    {
+        "key":    "viz_hubs_vs_comuns",
+        "titulo": "Hubs vs Aeroportos Comuns",
+        "tipo":   "Explanatória",
+        "cor":    "#f59e0b",
+        "o_que":  (
+            "O gráfico de barras agrupadas compara os 5 hubs regionais (REC, GRU, POA, BSB e MAO) "
+            "com os 15 aeroportos comuns em duas métricas: grau médio e densidade ego média."
+        ),
+        "insight": (
+            "Hubs e aeroportos comuns diferem em ambas as métricas, mas em sentidos opostos. "
+            "Os hubs têm grau médio de 5,0 contra 1,8 dos comuns. O dado contraintuitivo é a "
+            "densidade ego: hubs (0,43) têm densidade local menor do que os comuns (0,80). "
+            "Isso significa que os hubs conectam aeroportos que não se ligam diretamente entre si — "
+            "eles funcionam como pontes estruturais, não como membros de grupos coesos."
+        ),
+        "por_que": (
+            "Barras agrupadas permitem comparar duas métricas entre duas categorias em uma única figura, "
+            "aplicando a lei da proximidade. A lei da similaridade é aplicada pela cor: azul representa "
+            "sempre grau médio e laranja representa sempre densidade ego, criando uma codificação visual consistente."
+        ),
+    },
+    {
+        "key":    "viz_custo_rotas",
+        "titulo": "Custo das Rotas (Dijkstra)",
+        "tipo":   "Adicional",
+        "cor":    "#6b7280",
+        "o_que":  (
+            "O gráfico de barras verticais mostra o custo total acumulado de cada par origem-destino "
+            "calculado pelo algoritmo de caminho mínimo. As barras estão ordenadas crescentemente pelo "
+            "custo, com gradiente de amarelo (menor custo) a vermelho-escuro (maior custo). "
+            "O número de escalas é anotado sobre cada barra."
+        ),
+        "insight": (
+            "REC → POA é a rota de menor custo (1,5, sem escalas) por ser uma conexão direta entre dois "
+            "hubs regionais. BEL → CGH é a rota de maior custo (6,5, 4 escalas), exigindo passagem por "
+            "MAO, BSB, GRU e CNF, evidenciando a posição periférica de Belém. O custo não depende apenas "
+            "da distância geográfica, mas da posição do aeroporto na hierarquia da rede."
+        ),
+        "por_que": (
+            "Barras verticais com gradiente de cor aplicam o princípio de pregnância: a associação de "
+            "amarelo com barato e vermelho com caro é culturalmente consolidada. A anotação do número de "
+            "escalas sobre cada barra adiciona uma segunda variável informacional sem introduzir um eixo extra."
+        ),
+    },
+    {
+        "key":    "viz_densidade_ego",
+        "titulo": "Densidade da Ego-Network",
+        "tipo":   "Adicional",
+        "cor":    "#6b7280",
+        "o_que":  (
+            "O gráfico de barras horizontais mostra a densidade ego-network de cada aeroporto, "
+            "calculada sobre o subgrafo induzido por v ∪ vizinhança de v, ordenada de forma decrescente. "
+            "A densidade ego mede a proporção de conexões existentes entre o aeroporto e seus vizinhos "
+            "em relação ao máximo possível."
+        ),
+        "insight": (
+            "Aeroportos com grau 1 possuem densidade ego igual a 1,0, formando trivialmente um subgrafo "
+            "completo com seu único vizinho. O padrão mais rico está na faixa intermediária: hubs como "
+            "GRU (0,36) e MAO (0,33) têm as menores densidades ego da rede, confirmando que eles conectam "
+            "aeroportos que não se conectam entre si — seu papel estrutural é de ponte, não de núcleo coeso."
+        ),
+        "por_que": (
+            "Barras horizontais permitem rótulos legíveis com os 20 aeroportos simultaneamente. "
+            "A lei da continuidade é aplicada pela ordenação decrescente, criando uma narrativa visual "
+            "dos aeroportos de maior densidade local (periféricos) aos de menor densidade (hubs). "
+            "O eixo horizontal vai de 0 a 1, a escala natural da densidade."
+        ),
+    },
+    {
+        "key":    "viz_regioes_barras",
+        "titulo": "Métricas Comparadas por Região",
+        "tipo":   "Adicional",
+        "cor":    "#6b7280",
+        "o_que":  (
+            "O gráfico de barras agrupadas compara três métricas do subgrafo induzido de cada região: "
+            "ordem (número de aeroportos), tamanho (número de conexões internas) e densidade "
+            "(proporção de conexões existentes sobre o máximo possível)."
+        ),
+        "insight": (
+            "O Centro-Oeste apresenta o caso extremo positivo: com apenas 2 aeroportos diretamente "
+            "conectados, o subgrafo tem densidade máxima de 1,0. O Nordeste apresenta o caso oposto: "
+            "maior número de aeroportos (6) mas menor densidade (0,27), pois as conexões internas são "
+            "escassas e concentradas no hub REC. A relação inversa entre ordem e densidade aparece em quase todas as regiões."
+        ),
+        "por_que": (
+            "Barras agrupadas são o tipo adequado para comparar múltiplas métricas entre categorias discretas. "
+            "A lei da proximidade agrupa as três barras de cada região. A lei da similaridade mantém cores "
+            "consistentes entre as séries: azul (ordem), verde (tamanho) e laranja (densidade)."
+        ),
+    },
+    {
+        "key":    "viz_pizza_regioes",
+        "titulo": "Proporção de Aeroportos por Região",
+        "tipo":   "Adicional",
+        "cor":    "#6b7280",
+        "o_que":  (
+            "O gráfico de pizza mostra a distribuição percentual dos 20 aeroportos da rede entre as "
+            "5 regiões geográficas do Brasil. Cada fatia representa uma região, com percentual e nome "
+            "anotados diretamente sobre o gráfico."
+        ),
+        "insight": (
+            "O Nordeste concentra 30% dos aeroportos da rede (6 de 20), seguido pelo Sudeste com 25% "
+            "(5 aeroportos) e Norte com 20% (4 aeroportos). O Centro-Oeste é a região menos representada "
+            "com 10% (2 aeroportos). Apesar de ser a região mais representada, o Nordeste apresenta a "
+            "menor densidade interna (0,27), enquanto o Centro-Oeste, com menos aeroportos, tem densidade máxima."
+        ),
+        "por_que": (
+            "O gráfico de pizza é adequado quando o número de categorias é pequeno e o objetivo é mostrar "
+            "a proporção de cada categoria em relação ao todo. A consistência de cores com todas as outras "
+            "visualizações cria um código visual persistente que permite ao leitor identificar regiões instantaneamente."
+        ),
+    },
+]
+
+
+def _encode_img(path: Path) -> str:
+    """Retorna string data URI base64 de um PNG, ou string vazia se não existir."""
+    if not path.exists():
+        return ""
+    return "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode()
+
+
+def _build_viz_data_js(out_dir: Path) -> str:
+    """Monta o array JS VIZ_DATA com imagens embutidas e descrições."""
+    parts = ["const VIZ_DATA = ["]
+    for d in VIZ_DESCRIPTIONS:
+        img = _encode_img(out_dir / f"{d['key']}.png")
+        # Escapa aspas simples nos textos para não quebrar a string JS
+        def esc(s: str) -> str:
+            return s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ")
+        parts.append(
+            f"  {{titulo:'{esc(d['titulo'])}',tipo:'{esc(d['tipo'])}',tipoCor:'{d['cor']}',"
+            f"img:'{img}',"
+            f"oQue:'{esc(d['o_que'])}',"
+            f"insight:'{esc(d['insight'])}',"
+            f"porQue:'{esc(d['por_que'])}'"
+            f"}},"
+        )
+    parts.append("];")
+    return "\n".join(parts)
+
+
 def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
     from collections import deque
 
@@ -625,6 +841,18 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
         )
     regioes_js_str = "{" + ",".join(regioes_js_parts) + "}"
 
+    viz_data_js = _build_viz_data_js(out_path.parent)
+
+    # Gera itens HTML da sidebar dinamicamente
+    sidebar_items = ""
+    for d in VIZ_DESCRIPTIONS:
+        sidebar_items += (
+            f'<div class="viz-item" onclick="abrirViz({VIZ_DESCRIPTIONS.index(d)})">'
+            f'<div class="viz-item-titulo">{d["titulo"]}</div>'
+            f'<span class="viz-badge" style="background:{d["cor"]}">{d["tipo"]}</span>'
+            f'</div>\n  '
+        )
+
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -634,9 +862,12 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
 <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
 <style>
   * {{ margin:0; padding:0; box-sizing:border-box; }}
-  body {{ background:#1a1a2e; font-family:'Segoe UI',sans-serif; overflow:hidden; }}
-  #grafo {{ width:100vw; height:100vh; }}
+  body {{ background:#1a1a2e; font-family:'Segoe UI',sans-serif; overflow:hidden; display:flex; }}
 
+  /* ── Grafo ocupa o espaço central ── */
+  #grafo {{ flex:1; height:100vh; min-width:0; }}
+
+  /* ── Painel esquerdo (controles) ── */
   #painel {{
     position:fixed; top:12px; left:12px; z-index:999;
     background:rgba(15,15,35,0.97); border-radius:12px;
@@ -679,9 +910,186 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
   #bfs-slider-wrap {{ margin:4px 0; }}
   #bfs-slider {{ width:100%; accent-color:#f1c40f; }}
   #bfs-label {{ font-size:11px; color:#aaa; }}
+
+  /* ── Coluna direita: visualizações ── */
+  #viz-sidebar {{
+    width:210px;
+    flex-shrink:0;
+    background:rgba(15,15,35,0.97);
+    border-left:1px solid #2a2a4a;
+    height:100vh;
+    overflow-y:auto;
+    padding:14px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    z-index:998;
+  }}
+  #viz-sidebar h3 {{
+    font-size:13px; color:#f1c40f; margin:0 0 10px;
+  }}
+  .viz-item {{
+    background:#1e1e3a;
+    border:1px solid #2d2d50;
+    border-radius:8px;
+    padding:10px 10px 8px;
+    cursor:pointer;
+    transition:all .18s;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }}
+  .viz-item:hover {{
+    background:#2a2a50;
+    border-color:#f1c40f55;
+    transform:translateX(-2px);
+    box-shadow:2px 0 12px rgba(241,196,15,.12);
+  }}
+  .viz-item-titulo {{
+    font-size:11px;
+    font-weight:600;
+    color:#e2e8f0;
+    line-height:1.35;
+  }}
+  .viz-badge {{
+    font-size:9px;
+    font-weight:700;
+    padding:2px 6px;
+    border-radius:20px;
+    color:white;
+    align-self:flex-start;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+  }}
+
+  /* ── Overlay / popup ── */
+  #viz-overlay {{
+    display:none;
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(0,0,0,.75);
+    backdrop-filter:blur(4px);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }}
+  #viz-overlay.open {{ display:flex; }}
+  #viz-modal {{
+    background:#12122a;
+    border:1px solid #333;
+    border-radius:14px;
+    width:min(860px, 95vw);
+    max-height:90vh;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }}
+  #viz-modal-header {{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    padding:18px 20px 14px;
+    border-bottom:1px solid #2a2a4a;
+    gap:12px;
+    position:sticky; top:0; background:#12122a; z-index:1;
+    border-radius:14px 14px 0 0;
+  }}
+  #viz-modal-header-left {{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }}
+  #viz-modal-titulo {{
+    font-size:17px;
+    font-weight:700;
+    color:#f1f5f9;
+  }}
+  #viz-modal-tipo-badge {{
+    font-size:10px;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:20px;
+    color:white;
+    align-self:flex-start;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+  }}
+  #viz-close {{
+    background:#2a2a4a;
+    border:1px solid #444;
+    color:#aaa;
+    width:32px; height:32px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:18px;
+    line-height:1;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .15s;
+    margin-top:2px;
+  }}
+  #viz-close:hover {{ background:#e74c3c; color:white; border-color:#e74c3c; }}
+  #viz-modal-body {{
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }}
+  #viz-img-wrap {{
+    background:#0d0d20;
+    border-radius:10px;
+    padding:12px;
+    border:1px solid #2a2a4a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }}
+  #viz-img {{
+    max-width:100%;
+    height:auto;
+    border-radius:6px;
+    display:block;
+  }}
+  .viz-section {{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }}
+  .viz-section-label {{
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:#64748b;
+  }}
+  .viz-section-text {{
+    font-size:12.5px;
+    color:#cbd5e1;
+    line-height:1.65;
+  }}
+  .viz-insight-box {{
+    background:#1e1e3a;
+    border-left:3px solid #f1c40f;
+    border-radius:0 8px 8px 0;
+    padding:12px 14px;
+  }}
+  .viz-insight-box .viz-section-text {{ color:#e2e8f0; }}
+
+  /* scrollbars */
+  #viz-sidebar::-webkit-scrollbar,
+  #viz-modal::-webkit-scrollbar,
+  #painel::-webkit-scrollbar {{ width:5px; }}
+  #viz-sidebar::-webkit-scrollbar-track,
+  #viz-modal::-webkit-scrollbar-track,
+  #painel::-webkit-scrollbar-track {{ background:transparent; }}
+  #viz-sidebar::-webkit-scrollbar-thumb,
+  #viz-modal::-webkit-scrollbar-thumb,
+  #painel::-webkit-scrollbar-thumb {{ background:#333; border-radius:10px; }}
 </style>
 </head>
 <body>
+
+<!-- Painel de controles (esquerda, fixo) -->
 <div id="painel">
   <h3>🛫 Rede de Aeroportos</h3>
 
@@ -726,7 +1134,74 @@ def viz_grafo_interativo(g: Graph, out_path: Path) -> None:
   <div style="font-size:10px;color:#666;margin-top:6px">⭐ Nós maiores = hubs regionais<br>Hover nos nós para ver detalhes</div>
 </div>
 
+<!-- Grafo (centro) -->
 <div id="grafo"></div>
+
+<!-- Coluna direita: visualizações -->
+<div id="viz-sidebar">
+  <h3>📊 Visualizações</h3>
+  {sidebar_items}
+</div>
+
+<!-- Popup overlay -->
+<div id="viz-overlay" onclick="fecharVizOverlay(event)">
+  <div id="viz-modal">
+    <div id="viz-modal-header">
+      <div id="viz-modal-header-left">
+        <div id="viz-modal-titulo"></div>
+        <span id="viz-modal-tipo-badge"></span>
+      </div>
+      <button id="viz-close" onclick="fecharViz()">✕</button>
+    </div>
+    <div id="viz-modal-body">
+      <div id="viz-img-wrap">
+        <img id="viz-img" src="" alt="Visualização">
+      </div>
+      <div class="viz-section">
+        <div class="viz-section-label">O que está sendo mostrado</div>
+        <div class="viz-section-text" id="viz-o-que"></div>
+      </div>
+      <div class="viz-section viz-insight-box">
+        <div class="viz-section-label" style="color:#f1c40faa">💡 Insight</div>
+        <div class="viz-section-text" id="viz-insight"></div>
+      </div>
+      <div class="viz-section">
+        <div class="viz-section-label">Por que este tipo de gráfico</div>
+        <div class="viz-section-text" id="viz-por-que"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+{viz_data_js}
+
+function abrirViz(i) {{
+  const d = VIZ_DATA[i];
+  document.getElementById('viz-modal-titulo').textContent = d.titulo;
+  const badge = document.getElementById('viz-modal-tipo-badge');
+  badge.textContent = d.tipo;
+  badge.style.background = d.tipoCor;
+  document.getElementById('viz-img').src = d.img;
+  document.getElementById('viz-o-que').textContent = d.oQue;
+  document.getElementById('viz-insight').textContent = d.insight;
+  document.getElementById('viz-por-que').textContent = d.porQue;
+  document.getElementById('viz-overlay').classList.add('open');
+  document.getElementById('viz-modal').scrollTop = 0;
+}}
+
+function fecharViz() {{
+  document.getElementById('viz-overlay').classList.remove('open');
+}}
+
+function fecharVizOverlay(e) {{
+  if (e.target === document.getElementById('viz-overlay')) fecharViz();
+}}
+
+document.addEventListener('keydown', function(e) {{
+  if (e.key === 'Escape') fecharViz();
+}});
+</script>
 
 <script>
 const nodesData = {nodes_str};
