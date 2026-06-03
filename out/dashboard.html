@@ -447,7 +447,7 @@ const TIPO_COUNT  = {"regional": 14, "interregional": 12};
 const TIPO_PESO   = {"regional": 1.1071428571428572, "interregional": 2.0416666666666665};
 const REGIAO_CORES= {"Nordeste": "#e67e22", "Sudeste": "#1a6fa8", "Sul": "#27ae60", "Centro-Oeste": "#8e44ad", "Norte": "#c0392b"};
 const IATA_INFO   = {"REC": {"iata": "REC", "cidade": "Recife", "regiao": "Nordeste"}, "SSA": {"iata": "SSA", "cidade": "Salvador", "regiao": "Nordeste"}, "FOR": {"iata": "FOR", "cidade": "Fortaleza", "regiao": "Nordeste"}, "NAT": {"iata": "NAT", "cidade": "Natal", "regiao": "Nordeste"}, "JPA": {"iata": "JPA", "cidade": "João Pessoa", "regiao": "Nordeste"}, "GRU": {"iata": "GRU", "cidade": "São Paulo", "regiao": "Sudeste"}, "CGH": {"iata": "CGH", "cidade": "São Paulo", "regiao": "Sudeste"}, "GIG": {"iata": "GIG", "cidade": "Rio de Janeiro", "regiao": "Sudeste"}, "CNF": {"iata": "CNF", "cidade": "Belo Horizonte", "regiao": "Sudeste"}, "VIX": {"iata": "VIX", "cidade": "Vitória", "regiao": "Sudeste"}, "BSB": {"iata": "BSB", "cidade": "Brasília", "regiao": "Centro-Oeste"}, "GYN": {"iata": "GYN", "cidade": "Goiânia", "regiao": "Centro-Oeste"}, "CWB": {"iata": "CWB", "cidade": "Curitiba", "regiao": "Sul"}, "FLN": {"iata": "FLN", "cidade": "Florianópolis", "regiao": "Sul"}, "POA": {"iata": "POA", "cidade": "Porto Alegre", "regiao": "Sul"}, "MAO": {"iata": "MAO", "cidade": "Manaus", "regiao": "Norte"}, "BEL": {"iata": "BEL", "cidade": "Belém", "regiao": "Norte"}, "PVH": {"iata": "PVH", "cidade": "Porto Velho", "regiao": "Norte"}, "RBR": {"iata": "RBR", "cidade": "Rio Branco", "regiao": "Norte"}, "THE": {"iata": "THE", "cidade": "Teresina", "regiao": "Nordeste"}};
-const HUBS_SET    = ["REC", "BSB", "MAO", "POA", "GRU"];
+const HUBS_SET    = ["POA", "BSB", "MAO", "GRU", "REC"];
 const GRAU_MEDIO  = 2.6000;
 const HUBS_GRAU   = [{"iata": "GRU", "grau": 7}, {"iata": "REC", "grau": 5}, {"iata": "MAO", "grau": 5}, {"iata": "BSB", "grau": 4}, {"iata": "POA", "grau": 4}];
 const OTHERS_GRAU = [{"iata": "SSA", "grau": 4}, {"iata": "CGH", "grau": 3}, {"iata": "FOR", "grau": 2}, {"iata": "JPA", "grau": 2}, {"iata": "CNF", "grau": 2}, {"iata": "GYN", "grau": 2}, {"iata": "FLN", "grau": 2}, {"iata": "BEL", "grau": 2}, {"iata": "PVH", "grau": 2}, {"iata": "NAT", "grau": 1}, {"iata": "GIG", "grau": 1}, {"iata": "VIX", "grau": 1}, {"iata": "CWB", "grau": 1}, {"iata": "RBR", "grau": 1}, {"iata": "THE", "grau": 1}];
@@ -501,17 +501,16 @@ function buildInsights() {
   const belCgh = DISTANCIAS.find(d => d.origem==='BEL' && d.destino==='CGH') || DISTANCIAS[0];
 
   const items = [
-    { icon:'🏆', title:'Hub dominante', text:`GRU lidera com grau ${GRAUS[0].grau}, conectando ${GRAUS[0].grau} aeroportos diretamente — mais que qualquer outro nó da rede.` },
-    { icon:'🗺️', title:`Região mais densa`, text:`${densMax.regiao} tem densidade ${densMax.densidade.toFixed(2)} — todos os seus aeroportos são mutuamente alcançáveis com poucas arestas.` },
-    { icon:'✂️', title:'Rota direta mais barata', text:`REC → POA tem custo 1.5, pois os dois hubs regionais estão conectados diretamente (Hub↔Hub inter-regional).` },
-    { icon:'🔗', title:'Rota mais cara', text:`${belCgh.origem} → ${belCgh.destino} custa ${belCgh.custo} passando por ${belCgh.caminho.split(' -> ').length-2} escalas: ${belCgh.caminho}.` },
-    { icon:'⭐', title:'Hubs regionais', text:`Os 5 hubs (${hubsText}) concentram a maioria das conexões inter-regionais e reduzem o custo médio das rotas.` },
+    {title:'Hub dominante', text:`GRU lidera com grau ${GRAUS[0].grau}, conectando ${GRAUS[0].grau} aeroportos diretamente — mais que qualquer outro nó da rede.` },
+    {title:`Região mais densa`, text:`${densMax.regiao} tem densidade ${densMax.densidade.toFixed(2)} — todos os seus aeroportos são mutuamente alcançáveis com poucas arestas.` },
+    {title:'Rota direta mais barata', text:`REC → POA tem custo 1.5, pois os dois hubs regionais estão conectados diretamente (Hub↔Hub inter-regional).` },
+    {title:'Rota mais cara', text:`${belCgh.origem} → ${belCgh.destino} custa ${belCgh.custo} passando por ${belCgh.caminho.split(' -> ').length-2} escalas: ${belCgh.caminho}.` },
+    {title:'Hubs regionais', text:`Os 5 hubs (${hubsText}) concentram a maioria das conexões inter-regionais e reduzem o custo médio das rotas.` },
   ];
 
   const strip = document.getElementById('insight-strip');
   items.forEach(i => {
     strip.innerHTML += `<div class="insight-item">
-      <div class="insight-icon">${i.icon}</div>
       <div class="insight-text"><strong>${i.title}</strong>${i.text}</div>
     </div>`;
   });
