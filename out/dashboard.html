@@ -253,6 +253,98 @@ main {
 .reg-name { font-weight: 600; font-size: 11px; }
 .reg-val { text-align: right; color: var(--muted); }
 
+/* ── FILTROS ── */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 22px;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.filter-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.chip {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-family: var(--font-head);
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
+}
+.chip:hover { border-color: var(--accent); color: var(--text); }
+.chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.chip.hub-chip.active { background: #f1c40f; color: #000; border-color: #f1c40f; }
+.chip.comum-chip.active { background: #7ec8e3; color: #000; border-color: #7ec8e3; }
+.filter-divider { width: 1px; height: 36px; background: var(--border); }
+.slider-wrap { display: flex; align-items: center; gap: 8px; }
+.slider-wrap input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.slider-wrap input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+.slider-val {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent);
+  min-width: 18px;
+}
+.filter-reset {
+  margin-left: auto;
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filter-reset:hover { border-color: var(--accent); color: var(--accent); }
+.filter-count {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+.filter-count span { color: var(--accent); font-weight: 700; }
+
 /* ── ROTA TABLE ── */
 .rota-row {
   display: grid;
@@ -357,6 +449,35 @@ footer {
   <!-- Insights destacados -->
   <div class="insight-strip" id="insight-strip"></div>
 
+  <!-- Painel de Filtros -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Região</span>
+      <div class="filter-chips" id="filter-regioes">
+        <span class="chip active" data-regiao="all">Todas</span>
+      </div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">Tipo</span>
+      <div class="filter-chips">
+        <span class="chip active" id="chip-todos" data-tipo="all">Todos</span>
+        <span class="chip hub-chip" id="chip-hub" data-tipo="hub">Hub</span>
+        <span class="chip comum-chip" id="chip-comum" data-tipo="comum">Comum</span>
+      </div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">Grau mínimo</span>
+      <div class="slider-wrap">
+        <input type="range" id="slider-grau" min="1" max="7" value="1" step="1">
+        <span class="slider-val" id="slider-grau-val">1</span>
+      </div>
+    </div>
+    <button class="filter-reset" id="btn-reset-filters">↺ Resetar</button>
+    <span class="filter-count" id="filter-count"><span id="fc-num">20</span> / 20 aeroportos</span>
+  </div>
+
   <!-- Seção 1: Distribuição e ranking -->
   <p class="section-title">Conectividade e Hierarquia</p>
   <div class="grid-2-1">
@@ -447,7 +568,7 @@ const TIPO_COUNT  = {"regional": 14, "interregional": 12};
 const TIPO_PESO   = {"regional": 1.1071428571428572, "interregional": 2.0416666666666665};
 const REGIAO_CORES= {"Nordeste": "#e67e22", "Sudeste": "#1a6fa8", "Sul": "#27ae60", "Centro-Oeste": "#8e44ad", "Norte": "#c0392b"};
 const IATA_INFO   = {"REC": {"iata": "REC", "cidade": "Recife", "regiao": "Nordeste"}, "SSA": {"iata": "SSA", "cidade": "Salvador", "regiao": "Nordeste"}, "FOR": {"iata": "FOR", "cidade": "Fortaleza", "regiao": "Nordeste"}, "NAT": {"iata": "NAT", "cidade": "Natal", "regiao": "Nordeste"}, "JPA": {"iata": "JPA", "cidade": "João Pessoa", "regiao": "Nordeste"}, "GRU": {"iata": "GRU", "cidade": "São Paulo", "regiao": "Sudeste"}, "CGH": {"iata": "CGH", "cidade": "São Paulo", "regiao": "Sudeste"}, "GIG": {"iata": "GIG", "cidade": "Rio de Janeiro", "regiao": "Sudeste"}, "CNF": {"iata": "CNF", "cidade": "Belo Horizonte", "regiao": "Sudeste"}, "VIX": {"iata": "VIX", "cidade": "Vitória", "regiao": "Sudeste"}, "BSB": {"iata": "BSB", "cidade": "Brasília", "regiao": "Centro-Oeste"}, "GYN": {"iata": "GYN", "cidade": "Goiânia", "regiao": "Centro-Oeste"}, "CWB": {"iata": "CWB", "cidade": "Curitiba", "regiao": "Sul"}, "FLN": {"iata": "FLN", "cidade": "Florianópolis", "regiao": "Sul"}, "POA": {"iata": "POA", "cidade": "Porto Alegre", "regiao": "Sul"}, "MAO": {"iata": "MAO", "cidade": "Manaus", "regiao": "Norte"}, "BEL": {"iata": "BEL", "cidade": "Belém", "regiao": "Norte"}, "PVH": {"iata": "PVH", "cidade": "Porto Velho", "regiao": "Norte"}, "RBR": {"iata": "RBR", "cidade": "Rio Branco", "regiao": "Norte"}, "THE": {"iata": "THE", "cidade": "Teresina", "regiao": "Nordeste"}};
-const HUBS_SET    = ["POA", "BSB", "MAO", "GRU", "REC"];
+const HUBS_SET    = ["MAO", "BSB", "POA", "REC", "GRU"];
 const GRAU_MEDIO  = 2.6000;
 const HUBS_GRAU   = [{"iata": "GRU", "grau": 7}, {"iata": "REC", "grau": 5}, {"iata": "MAO", "grau": 5}, {"iata": "BSB", "grau": 4}, {"iata": "POA", "grau": 4}];
 const OTHERS_GRAU = [{"iata": "SSA", "grau": 4}, {"iata": "CGH", "grau": 3}, {"iata": "FOR", "grau": 2}, {"iata": "JPA", "grau": 2}, {"iata": "CNF", "grau": 2}, {"iata": "GYN", "grau": 2}, {"iata": "FLN", "grau": 2}, {"iata": "BEL", "grau": 2}, {"iata": "PVH", "grau": 2}, {"iata": "NAT", "grau": 1}, {"iata": "GIG", "grau": 1}, {"iata": "VIX", "grau": 1}, {"iata": "CWB", "grau": 1}, {"iata": "RBR", "grau": 1}, {"iata": "THE", "grau": 1}];
@@ -516,12 +637,41 @@ function buildInsights() {
   });
 }
 
-function buildGrausChart() {
-  const labels = GRAUS.map(r => r.aeroporto);
-  const values = GRAUS.map(r => parseInt(r.grau));
-  const colors = GRAUS.map(r => HUBS_SET.includes(r.aeroporto) ? '#f1c40f' : '#7ec8e3');
+// ── ESTADO DE FILTRO GLOBAL ──
+const filterState = { regiao: 'all', tipo: 'all', grauMin: 1 };
 
-  new Chart(document.getElementById('chart-graus'), {
+function getFilteredAirports() {
+  return Object.keys(IATA_INFO).filter(iata => {
+    const info  = IATA_INFO[iata];
+    const ego   = EGO.find(r => r.aeroporto === iata) || {};
+    const grau  = parseInt(ego.grau) || 0;
+    const isHub = HUBS_SET.includes(iata);
+    if (filterState.regiao !== 'all' && info.regiao !== filterState.regiao) return false;
+    if (filterState.tipo === 'hub'   && !isHub) return false;
+    if (filterState.tipo === 'comum' && isHub)  return false;
+    if (grau < filterState.grauMin) return false;
+    return true;
+  });
+}
+
+let grausChartInst = null;
+
+function buildGrausChart() {
+  const filtered = getFilteredAirports();
+  const rows = GRAUS.filter(r => filtered.includes(r.aeroporto));
+  const labels = rows.map(r => r.aeroporto);
+  const values = rows.map(r => parseInt(r.grau));
+  const colors = rows.map(r => HUBS_SET.includes(r.aeroporto) ? '#f1c40f' : '#7ec8e3');
+
+  if (grausChartInst) {
+    grausChartInst.data.labels = labels;
+    grausChartInst.data.datasets[0].data = values;
+    grausChartInst.data.datasets[0].backgroundColor = colors;
+    grausChartInst.update();
+    return;
+  }
+
+  grausChartInst = new Chart(document.getElementById('chart-graus'), {
     type: 'bar',
     data: {
       labels,
@@ -555,6 +705,46 @@ function buildGrausChart() {
         y: { grid: { display: false } },
       }
     }
+  });
+}
+
+function applyFilters() {
+  const filtered = getFilteredAirports();
+  document.getElementById('fc-num').textContent = filtered.length;
+  buildGrausChart();
+  rebuildTable(document.getElementById('search-table').value.toLowerCase().trim());
+}
+
+function rebuildTable(textFilter) {
+  const filtered = getFilteredAirports();
+  const tbody = document.getElementById('airport-tbody');
+  const rows = [];
+
+  filtered.forEach(iata => {
+    const info = IATA_INFO[iata];
+    const e    = EGO.find(r => r.aeroporto === iata) || {};
+    const hub  = HUBS_SET.includes(iata);
+    rows.push({ iata, info, e, hub });
+  });
+
+  rows.sort((a,b) => (parseInt(b.e.grau)||0) - (parseInt(a.e.grau)||0));
+
+  tbody.innerHTML = '';
+  rows.filter(r =>
+    !textFilter ||
+    r.iata.toLowerCase().includes(textFilter) ||
+    r.info.cidade.toLowerCase().includes(textFilter)
+  ).forEach(r => {
+    const cor = regiaoColor(r.info.regiao);
+    tbody.innerHTML += `<tr>
+      <td><b style="color:var(--accent2);">${r.iata}</b></td>
+      <td>${r.info.cidade}</td>
+      <td><span style="color:${cor};font-weight:600;">${r.info.regiao}</span></td>
+      <td style="color:var(--accent);">${r.e.grau || '-'}</td>
+      <td>${r.hub ? '<span class="badge hub-badge">Hub</span>' : '<span style="color:var(--muted);">comum</span>'}</td>
+      <td>${r.e.densidade_ego ? parseFloat(r.e.densidade_ego).toFixed(3) : '-'}</td>
+      <td>${r.e.ordem_ego || '-'}</td>
+    </tr>`;
   });
 }
 
@@ -737,42 +927,81 @@ function buildHubsChart() {
   });
 }
 function buildTable() {
-  const tbody = document.getElementById('airport-tbody');
-  const rows  = [];
+  rebuildTable('');
+  document.getElementById('search-table').addEventListener('input', e => {
+    rebuildTable(e.target.value.toLowerCase().trim());
+  });
+}
 
-  Object.keys(IATA_INFO).forEach(iata => {
-    const info = IATA_INFO[iata];
-    const e    = EGO.find(r => r.aeroporto === iata) || {};
-    const hub  = HUBS_SET.includes(iata);
-    rows.push({ iata, info, e, hub });
+function initFilterUI() {
+  const regiaoWrap = document.getElementById('filter-regioes');
+  REGIOES.forEach(r => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.dataset.regiao = r.regiao;
+    chip.textContent = r.regiao;
+    chip.style.borderColor = REGIAO_CORES[r.regiao] || 'var(--border)';
+    chip.addEventListener('click', () => {
+      filterState.regiao = r.regiao;
+      regiaoWrap.querySelectorAll('.chip').forEach(c => {
+        c.classList.remove('active');
+        c.style.background = '';
+        c.style.color = '';
+      });
+      chip.classList.add('active');
+      chip.style.background = REGIAO_CORES[r.regiao] || 'var(--accent)';
+      chip.style.color = '#fff';
+      applyFilters();
+    });
+    regiaoWrap.appendChild(chip);
   });
 
-  rows.sort((a,b) => (parseInt(b.e.grau)||0) - (parseInt(a.e.grau)||0));
-
-  function render(filter) {
-    tbody.innerHTML = '';
-    rows.filter(r =>
-      !filter ||
-      r.iata.toLowerCase().includes(filter) ||
-      r.info.cidade.toLowerCase().includes(filter)
-    ).forEach(r => {
-      const cor = regiaoColor(r.info.regiao);
-      tbody.innerHTML += `<tr>
-        <td><b style="color:var(--accent2);">${r.iata}</b></td>
-        <td>${r.info.cidade}</td>
-        <td><span style="color:${cor};font-weight:600;">${r.info.regiao}</span></td>
-        <td style="color:var(--accent);">${r.e.grau || '-'}</td>
-        <td>${r.hub ? '<span class="badge hub-badge">Hub</span>' : '<span style="color:var(--muted);">comum</span>'}</td>
-        <td>${r.e.densidade_ego ? parseFloat(r.e.densidade_ego).toFixed(3) : '-'}</td>
-        <td>${r.e.ordem_ego || '-'}</td>
-      </tr>`;
+  regiaoWrap.querySelector('[data-regiao="all"]').addEventListener('click', () => {
+    filterState.regiao = 'all';
+    regiaoWrap.querySelectorAll('.chip').forEach(c => {
+      c.classList.remove('active');
+      c.style.background = '';
+      c.style.color = '';
     });
-  }
+    regiaoWrap.querySelector('[data-regiao="all"]').classList.add('active');
+    applyFilters();
+  });
 
-  render('');
+  ['chip-todos','chip-hub','chip-comum'].forEach(id => {
+    document.getElementById(id).addEventListener('click', () => {
+      const tipo = { 'chip-todos':'all', 'chip-hub':'hub', 'chip-comum':'comum' }[id];
+      filterState.tipo = tipo;
+      ['chip-todos','chip-hub','chip-comum'].forEach(cid => document.getElementById(cid).classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      applyFilters();
+    });
+  });
 
-  document.getElementById('search-table').addEventListener('input', e => {
-    render(e.target.value.toLowerCase().trim());
+  const slider = document.getElementById('slider-grau');
+  const sliderVal = document.getElementById('slider-grau-val');
+  slider.max = Math.max(...GRAUS.map(g => parseInt(g.grau)));
+  slider.addEventListener('input', () => {
+    filterState.grauMin = parseInt(slider.value);
+    sliderVal.textContent = slider.value;
+    applyFilters();
+  });
+
+  document.getElementById('btn-reset-filters').addEventListener('click', () => {
+    filterState.regiao = 'all';
+    filterState.tipo   = 'all';
+    filterState.grauMin = 1;
+    slider.value = 1;
+    sliderVal.textContent = '1';
+    regiaoWrap.querySelectorAll('.chip').forEach(c => {
+      c.classList.remove('active');
+      c.style.background = '';
+      c.style.color = '';
+    });
+    regiaoWrap.querySelector('[data-regiao="all"]').classList.add('active');
+    ['chip-todos','chip-hub','chip-comum'].forEach(cid => document.getElementById(cid).classList.remove('active'));
+    document.getElementById('chip-todos').classList.add('active');
+    document.getElementById('search-table').value = '';
+    applyFilters();
   });
 }
 
@@ -785,6 +1014,7 @@ buildRotas();
 buildEgo();
 buildHubsChart();
 buildTable();
+initFilterUI();
 </script>
 </body>
 </html>
