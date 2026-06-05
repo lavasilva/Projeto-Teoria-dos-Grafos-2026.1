@@ -6,7 +6,7 @@
 Análise estrutural e algorítmica da rede de aeroportos brasileiros com implementação própria de BFS, DFS, Dijkstra e Bellman-Ford. O projeto modela os aeroportos como nós de um grafo não-direcionado e as rotas como arestas com pesos, permitindo calcular métricas de conectividade, caminhos mínimos, ego-networks e comparações de desempenho entre algoritmos.
 
 ## Documento do Projeto
-https://docs.google.com/document/d/1EWGNU9YuuUsdmRpXTztDNzRiARYBJwFfk8IPl3aJzSE/edit?tab=t.0
+
 
 ## Instalação
 
@@ -61,7 +61,7 @@ projeto-grafos/
 
 ## Descrição dos Dados
 
-**`data/aeroportos_data.csv`** — dataset fornecido pelo professor com 20 aeroportos brasileiros. Colunas: `iata`, `cidade`, `regiao`.
+**`data/aeroportos_data.csv`** — dataset fornecido pela professora com 20 aeroportos brasileiros. Colunas: `iata`, `cidade`, `regiao`.
 
 **`data/adjacencias_aeroportos.csv`** — arestas do grafo construídas pelo grupo. Colunas: `origem`, `destino`, `tipo_conexao`, `justificativa`, `peso`. Cada linha representa uma aresta não-direcionada (o sistema espelha automaticamente).
 
