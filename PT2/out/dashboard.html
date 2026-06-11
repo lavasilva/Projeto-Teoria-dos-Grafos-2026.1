@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — Wikispeedia · Rede de Artigos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#08111f; --surface:#0a1628; --card:#0e1b30; --border:#162035;
+  --accent:#2dd4bf; --accent2:#38bdf8; --accent3:#c084fc;
+  --text:#e2e8f0; --muted:#3d5570; --green:#22c55e; --amber:#fbbf24; --red:#f87171;
+  --font-head:'Syne',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-mono);font-size:13px;min-height:100vh;}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px 14px;
+  border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;}
+.header-left h1{font-family:var(--font-head);font-weight:800;font-size:20px;letter-spacing:-.5px;color:var(--accent);}
+.header-left p{font-size:11px;color:var(--muted);margin-top:2px;}
+.header-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:var(--accent);
+  color:#04201c;font-family:var(--font-head);font-weight:600;font-size:13px;border-radius:6px;
+  text-decoration:none;transition:opacity .15s,transform .15s;}
+.header-btn:hover{opacity:.88;transform:translateY(-1px);}
+
+main{padding:28px 32px;max-width:1440px;margin:0 auto;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:28px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;}
+.kpi-value{font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--accent);line-height:1;}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+
+.section-title{font-family:var(--font-head);font-weight:600;font-size:12px;text-transform:uppercase;
+  letter-spacing:2px;color:var(--muted);margin:0 0 14px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:18px;margin-bottom:22px;}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:22px;}
+@media(max-width:900px){.grid-2,.grid-1-2,.grid-2-1{grid-template-columns:1fr;}}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:14px;font-weight:600;}
+.chart-wrap{position:relative;height:240px;}
+.chart-wrap-tall{position:relative;height:340px;}
+
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table thead th{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+  padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);font-weight:600;}
+.data-table tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+.data-table tbody tr:hover{background:rgba(255,255,255,.03);}
+.data-table tbody td{padding:7px 10px;}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+.hub-badge{background:rgba(45,212,191,.16);color:var(--accent);border:1px solid rgba(45,212,191,.3);}
+.auth-badge{background:rgba(56,189,248,.14);color:var(--accent2);border:1px solid rgba(56,189,248,.28);}
+
+/* filtros */
+.filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:20px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:14px 20px;margin-bottom:22px;}
+.filter-group{display:flex;flex-direction:column;gap:6px;}
+.filter-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);}
+.filter-chips{display:flex;flex-wrap:wrap;gap:5px;max-width:620px;}
+.chip{padding:4px 10px;border-radius:20px;font-size:10px;font-family:var(--font-head);font-weight:600;
+  border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;}
+.chip:hover{border-color:var(--accent);color:var(--text);}
+.chip.active{background:var(--accent);color:#04201c;border-color:var(--accent);}
+.chip.hub-chip.active{background:var(--accent);color:#04201c;border-color:var(--accent);}
+.chip.auth-chip.active{background:var(--accent2);color:#04201c;border-color:var(--accent2);}
+.filter-divider{width:1px;height:36px;background:var(--border);}
+.slider-wrap{display:flex;align-items:center;gap:8px;}
+.slider-wrap input[type=range]{-webkit-appearance:none;appearance:none;width:120px;height:4px;
+  background:var(--border);border-radius:2px;outline:none;cursor:pointer;}
+.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--accent);cursor:pointer;}
+.slider-val{font-family:var(--font-head);font-weight:700;font-size:13px;color:var(--accent);min-width:26px;}
+.filter-reset{margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:var(--font-mono);font-size:10px;cursor:pointer;transition:all .15s;}
+.filter-reset:hover{border-color:var(--accent);color:var(--accent);}
+.filter-count{font-size:10px;color:var(--muted);white-space:nowrap;}
+.filter-count span{color:var(--accent);font-weight:700;}
+
+/* listas (categorias, top, rotas) */
+.reg-list{display:flex;flex-direction:column;gap:9px;}
+.reg-row{display:grid;grid-template-columns:150px 1fr 50px 56px;align-items:center;gap:8px;font-size:11px;}
+.reg-bar-bg{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.reg-bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.22,1,.36,1);}
+.reg-name{font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.reg-val{text-align:right;color:var(--muted);}
+
+.tworow{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:600px){.tworow{grid-template-columns:1fr;}}
+.mini-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.mini-row:last-child{border-bottom:none;}
+.mini-rank{color:var(--muted);width:18px;text-align:right;}
+.mini-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mini-val{color:var(--accent);font-weight:700;}
+
+.rota-row{display:grid;grid-template-columns:1fr 70px;gap:10px;align-items:center;padding:9px 0;
+  border-bottom:1px solid var(--border);font-size:11px;}
+.rota-row:last-child{border-bottom:none;}
+.rota-path{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.rota-chip{padding:2px 7px;background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.25);
+  border-radius:4px;font-size:10px;color:var(--accent3);font-weight:600;}
+.rota-arrow{color:var(--muted);font-size:10px;}
+.custo-bar-bg{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.custo-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent3));border-radius:3px;}
+
+.insight-strip{background:linear-gradient(135deg,rgba(45,212,191,.07),rgba(56,189,248,.05));
+  border:1px solid rgba(45,212,191,.2);border-radius:10px;padding:14px 20px;display:flex;flex-wrap:wrap;gap:24px;margin-bottom:22px;}
+.insight-item{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:240px;}
+.insight-text{font-size:11px;line-height:1.6;}
+.insight-text strong{color:var(--accent);display:block;font-size:11px;margin-bottom:2px;}
+
+.note{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6;}
+footer{text-align:center;padding:24px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);margin-top:32px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>🌐 Wikispeedia — Rede de Artigos</h1>
+    <p>Dashboard Analítico — Teoria dos Grafos 2026.1 · Parte 2</p>
+  </div>
+  <a class="header-btn" href="grafo_interativo.html">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/></svg>
+    Ver Grafo Interativo
+  </a>
+</header>
+
+<main>
+  <div class="kpi-row" id="kpi-row"></div>
+  <div class="insight-strip" id="insight-strip"></div>
+
+  <!-- Filtros -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Categoria</span>
+      <div class="filter-chips" id="filter-cats">
+        <span class="chip active" data-cat="all">Todas</span>
+      </div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">Tipo</span>
+      <div class="filter-chips">
+        <span class="chip active" id="chip-todos" data-tipo="all">Todos</span>
+        <span class="chip hub-chip" id="chip-hub" data-tipo="hub">Hub</span>
+        <span class="chip auth-chip" id="chip-auth" data-tipo="autoridade">Autoridade</span>
+      </div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">Grau de saída mínimo</span>
+      <div class="slider-wrap">
+        <input type="range" id="slider-grau" min="0" max="294" value="0" step="5">
+        <span class="slider-val" id="slider-grau-val">0</span>
+      </div>
+    </div>
+    <button class="filter-reset" id="btn-reset-filters">↺ Resetar</button>
+    <span class="filter-count" id="filter-count"><span id="fc-num">0</span> artigos no recorte</span>
+  </div>
+
+  <!-- Conectividade e Hierarquia -->
+  <p class="section-title">Conectividade e Hierarquia</p>
+  <div class="grid-2-1">
+    <div class="card">
+      <div class="card-title">Ranking de Artigos por Grau de Saída</div>
+      <div class="chart-wrap-tall"><canvas id="chart-graus"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Hubs vs Autoridades</div>
+      <div class="tworow">
+        <div>
+          <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">↗ Conectores (saída)</div>
+          <div id="top-out-list"></div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">↘ Autoridades (entrada)</div>
+          <div id="top-in-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Análise por Categoria -->
+  <p class="section-title">Análise por Categoria</p>
+  <div class="grid-1-2">
+    <div class="card">
+      <div class="card-title">Artigos por Categoria</div>
+      <div id="cat-list" class="reg-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Distribuição por Categoria</div>
+      <div class="chart-wrap-tall"><canvas id="chart-cat"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Caminhos Mínimos -->
+  <p class="section-title">Caminhos Mínimos (Dijkstra)</p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Rotas Calculadas</div>
+      <div id="rota-list"></div>
+      <div class="note">Peso da aresta = 1 / grau de saída da origem. Passar por hubs (grau alto) barateia cada salto.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Custo Ponderado vs Saltos</div>
+      <div class="chart-wrap"><canvas id="chart-rotas"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Busca em Grafo -->
+  <p class="section-title">Busca em Grafo (BFS &amp; DFS)</p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">BFS — Nós Descobertos por Camada</div>
+      <div class="chart-wrap"><canvas id="chart-bfs"></canvas></div>
+      <div class="note">A maioria dos 4.604 nós é alcançada já na 2ª–3ª camada: a rede tem diâmetro pequeno (≈ seis graus de separação).</div>
+    </div>
+    <div class="card">
+      <div class="card-title">DFS — Classificação de Arestas</div>
+      <div class="chart-wrap"><canvas id="chart-dfs"></canvas></div>
+      <div class="note">As ~65.000 arestas de retorno (back) confirmam que o grafo é fortemente cíclico.</div>
+    </div>
+  </div>
+
+  <!-- Desempenho -->
+  <p class="section-title">Desempenho dos Algoritmos</p>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Tempo Médio por Algoritmo (escala log)</div>
+      <div class="chart-wrap"><canvas id="chart-perf-time"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Memória Média por Algoritmo</div>
+      <div class="chart-wrap"><canvas id="chart-perf-mem"></canvas></div>
+      <div class="note">* Bellman-Ford rodou em subgrafo de 200 nós: O(V·E) é inviável no grafo completo (~550M operações).</div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <p class="section-title">Tabela de Artigos (hubs &amp; autoridades)</p>
+  <div class="card" style="margin-bottom:22px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span class="card-title" style="margin:0;">Artigos em destaque</span>
+      <input id="search-table" placeholder="Filtrar por nome ou categoria..."
+        style="background:var(--surface);border:1px solid var(--border);border-radius:6px;
+               padding:5px 10px;color:var(--text);font-family:var(--font-mono);font-size:11px;width:240px;">
+    </div>
+    <table class="data-table" id="article-table">
+      <thead><tr>
+        <th>Artigo</th><th>Categoria</th><th>Grau Saída</th><th>Grau Entrada</th><th>Tipo</th><th>Razão E/S</th>
+      </tr></thead>
+      <tbody id="article-tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  Projeto Teoria dos Grafos 2026.1 · CESAR School · Dataset: Wikispeedia (Stanford SNAP) — articles.tsv, links.tsv, categories.tsv
+</footer>
+
+<script>
+const GLOBAL = {"num_nodes": 4604, "num_edges": 119882, "densidade": 0.0056568894271159615, "avg": 26.04, "median": 19, "max": 294, "n_categorias": 15};
+const ARTICLES = [{"raw": "United_States", "label": "United States", "out": 294, "in": 1551, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Driving_on_the_left_or_right", "label": "Driving on the left or right", "out": 255, "in": 0, "cat": "Design_and_Technology", "tipo": "hub"}, {"raw": "List_of_countries", "label": "List of countries", "out": 244, "in": 63, "cat": "Geography", "tipo": "hub"}, {"raw": "List_of_circulating_currencies", "label": "List of circulating currencies", "out": 236, "in": 8, "cat": "Business_Studies", "tipo": "hub"}, {"raw": "List_of_sovereign_states", "label": "List of sovereign states", "out": 216, "in": 43, "cat": "Geography", "tipo": "hub"}, {"raw": "Africa", "label": "Africa", "out": 212, "in": 477, "cat": "Geography", "tipo": "autoridade"}, {"raw": "List_of_countries_by_system_of_government", "label": "List of countries by system of government", "out": 207, "in": 246, "cat": "Citizenship", "tipo": "autoridade"}, {"raw": "Lebanon", "label": "Lebanon", "out": 192, "in": 114, "cat": "Countries", "tipo": "hub"}, {"raw": "Interpol", "label": "Interpol", "out": 191, "in": 13, "cat": "Citizenship", "tipo": "hub"}, {"raw": "Armenia", "label": "Armenia", "out": 186, "in": 99, "cat": "Countries", "tipo": "hub"}, {"raw": "Georgia_%28country%29", "label": "Georgia (country)", "out": 180, "in": 84, "cat": "Countries", "tipo": "hub"}, {"raw": "Turkey", "label": "Turkey", "out": 172, "in": 249, "cat": "Countries", "tipo": "autoridade"}, {"raw": "England", "label": "England", "out": 172, "in": 751, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Israel", "label": "Israel", "out": 169, "in": 236, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Germany", "label": "Germany", "out": 169, "in": 743, "cat": "Countries", "tipo": "autoridade"}, {"raw": "United_Kingdom", "label": "United Kingdom", "out": 168, "in": 972, "cat": "Countries", "tipo": "autoridade"}, {"raw": "19th_century", "label": "19th century", "out": 167, "in": 286, "cat": "History", "tipo": "autoridade"}, {"raw": "Argentina", "label": "Argentina", "out": 163, "in": 189, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Mozambique", "label": "Mozambique", "out": 162, "in": 98, "cat": "Geography", "tipo": "hub"}, {"raw": "Saudi_Arabia", "label": "Saudi Arabia", "out": 160, "in": 110, "cat": "Countries", "tipo": "hub"}, {"raw": "Uganda", "label": "Uganda", "out": 160, "in": 81, "cat": "Geography", "tipo": "hub"}, {"raw": "Europe", "label": "Europe", "out": 159, "in": 933, "cat": "Geography", "tipo": "autoridade"}, {"raw": "List_of_rivers_by_length", "label": "List of rivers by length", "out": 156, "in": 3, "cat": "Geography", "tipo": "hub"}, {"raw": "21st_century", "label": "21st century", "out": 155, "in": 34, "cat": "History", "tipo": "hub"}, {"raw": "Djibouti", "label": "Djibouti", "out": 155, "in": 50, "cat": "Geography", "tipo": "hub"}, {"raw": "Chad", "label": "Chad", "out": 151, "in": 66, "cat": "Geography", "tipo": "hub"}, {"raw": "Madagascar", "label": "Madagascar", "out": 151, "in": 104, "cat": "Geography", "tipo": "hub"}, {"raw": "Global_city", "label": "Global city", "out": 148, "in": 20, "cat": "Geography", "tipo": "hub"}, {"raw": "History_of_the_world", "label": "History of the world", "out": 147, "in": 7, "cat": "History", "tipo": "hub"}, {"raw": "Bulgaria", "label": "Bulgaria", "out": 145, "in": 110, "cat": "Countries", "tipo": "hub"}, {"raw": "Democratic_Republic_of_the_Congo", "label": "Democratic Republic of the Congo", "out": 145, "in": 79, "cat": "Geography", "tipo": "hub"}, {"raw": "Azerbaijan", "label": "Azerbaijan", "out": 144, "in": 82, "cat": "Countries", "tipo": "hub"}, {"raw": "Yemen", "label": "Yemen", "out": 140, "in": 68, "cat": "Countries", "tipo": "hub"}, {"raw": "Albania", "label": "Albania", "out": 139, "in": 85, "cat": "Countries", "tipo": "hub"}, {"raw": "Slovenia", "label": "Slovenia", "out": 139, "in": 77, "cat": "Countries", "tipo": "hub"}, {"raw": "History_of_science", "label": "History of science", "out": 138, "in": 13, "cat": "History", "tipo": "hub"}, {"raw": "Somalia", "label": "Somalia", "out": 137, "in": 87, "cat": "Geography", "tipo": "hub"}, {"raw": "Human", "label": "Human", "out": 137, "in": 165, "cat": "Science", "tipo": "autoridade"}, {"raw": "Asia", "label": "Asia", "out": 137, "in": 357, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Scramble_for_Africa", "label": "Scramble for Africa", "out": 134, "in": 20, "cat": "History", "tipo": "hub"}, {"raw": "World_War_II", "label": "World War II", "out": 119, "in": 751, "cat": "History", "tipo": "autoridade"}, {"raw": "English_language", "label": "English language", "out": 118, "in": 598, "cat": "Language_and_literature", "tipo": "autoridade"}, {"raw": "Netherlands", "label": "Netherlands", "out": 116, "in": 342, "cat": "Countries", "tipo": "autoridade"}, {"raw": "United_Nations", "label": "United Nations", "out": 113, "in": 331, "cat": "Citizenship", "tipo": "autoridade"}, {"raw": "Scotland", "label": "Scotland", "out": 112, "in": 338, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Paris", "label": "Paris", "out": 112, "in": 308, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Russia", "label": "Russia", "out": 105, "in": 520, "cat": "Countries", "tipo": "autoridade"}, {"raw": "London", "label": "London", "out": 102, "in": 587, "cat": "Geography", "tipo": "autoridade"}, {"raw": "South_Africa", "label": "South Africa", "out": 101, "in": 311, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Japan", "label": "Japan", "out": 98, "in": 573, "cat": "Geography", "tipo": "autoridade"}, {"raw": "20th_century", "label": "20th century", "out": 93, "in": 306, "cat": "History", "tipo": "autoridade"}, {"raw": "China", "label": "China", "out": 90, "in": 496, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Spain", "label": "Spain", "out": 89, "in": 539, "cat": "Countries", "tipo": "autoridade"}, {"raw": "New_Zealand", "label": "New Zealand", "out": 86, "in": 301, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Australia", "label": "Australia", "out": 86, "in": 563, "cat": "Countries", "tipo": "autoridade"}, {"raw": "French_language", "label": "French language", "out": 85, "in": 314, "cat": "Language_and_literature", "tipo": "autoridade"}, {"raw": "Italy", "label": "Italy", "out": 85, "in": 550, "cat": "Countries", "tipo": "autoridade"}, {"raw": "France", "label": "France", "out": 85, "in": 959, "cat": "Countries", "tipo": "autoridade"}, {"raw": "World_War_I", "label": "World War I", "out": 82, "in": 404, "cat": "History", "tipo": "autoridade"}, {"raw": "India", "label": "India", "out": 81, "in": 611, "cat": "Geography", "tipo": "autoridade"}, {"raw": "North_America", "label": "North America", "out": 77, "in": 410, "cat": "Geography", "tipo": "autoridade"}, {"raw": "New_York_City", "label": "New York City", "out": 71, "in": 317, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Ireland", "label": "Ireland", "out": 71, "in": 319, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Egypt", "label": "Egypt", "out": 70, "in": 362, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Soviet_Union", "label": "Soviet Union", "out": 65, "in": 342, "cat": "History", "tipo": "autoridade"}, {"raw": "Art", "label": "Art", "out": 65, "in": 111, "cat": "Art", "tipo": "autoridade"}, {"raw": "Mathematics", "label": "Mathematics", "out": 63, "in": 151, "cat": "Mathematics", "tipo": "autoridade"}, {"raw": "Canada", "label": "Canada", "out": 63, "in": 571, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Agriculture", "label": "Agriculture", "out": 57, "in": 241, "cat": "Everyday_life", "tipo": "autoridade"}, {"raw": "Portugal", "label": "Portugal", "out": 52, "in": 324, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Christianity", "label": "Christianity", "out": 49, "in": 343, "cat": "Religion", "tipo": "autoridade"}, {"raw": "Time_zone", "label": "Time zone", "out": 39, "in": 351, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Computer", "label": "Computer", "out": 36, "in": 87, "cat": "IT", "tipo": "autoridade"}, {"raw": "Latin", "label": "Latin", "out": 29, "in": 443, "cat": "Language_and_literature", "tipo": "autoridade"}, {"raw": "Animal", "label": "Animal", "out": 29, "in": 492, "cat": "Science", "tipo": "autoridade"}, {"raw": "Scientific_classification", "label": "Scientific classification", "out": 25, "in": 519, "cat": "Science", "tipo": "autoridade"}, {"raw": "Music", "label": "Music", "out": 24, "in": 99, "cat": "Music", "tipo": "autoridade"}, {"raw": "Carolus_Linnaeus", "label": "Carolus Linnaeus", "out": 23, "in": 218, "cat": "People", "tipo": "autoridade"}, {"raw": "Currency", "label": "Currency", "out": 22, "in": 291, "cat": "Business_Studies", "tipo": "autoridade"}, {"raw": "Chordate", "label": "Chordate", "out": 8, "in": 338, "cat": "Science", "tipo": "autoridade"}];
+const CAT_COUNTS = {"Science": 1035, "Geography": 952, "People": 584, "History": 508, "Everyday_life": 351, "Design_and_Technology": 231, "Citizenship": 206, "Language_and_literature": 183, "Religion": 116, "Music": 96, "Countries": 92, "Business_Studies": 85, "IT": 79, "Mathematics": 43, "Art": 37, "other": 6};
+const CAT_COLORS = {"Science": "#34d399", "Geography": "#0ea5e9", "People": "#c084fc", "History": "#fde047", "Everyday_life": "#fb923c", "Design_and_Technology": "#4ade80", "Countries": "#bae6fd", "Citizenship": "#e879f9", "Language_and_literature": "#f472b6", "Religion": "#fb7c3c", "Music": "#a78bfa", "Business_Studies": "#fbbf24", "IT": "#22d3ee", "Mathematics": "#86efac", "Art": "#f87171", "other": "#94a3b8"};
+const TOP_OUT = [{"raw": "United_States", "label": "United States", "out": 294, "in": 1551, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Driving_on_the_left_or_right", "label": "Driving on the left or right", "out": 255, "in": 0, "cat": "Design_and_Technology", "tipo": "hub"}, {"raw": "List_of_countries", "label": "List of countries", "out": 244, "in": 63, "cat": "Geography", "tipo": "hub"}, {"raw": "List_of_circulating_currencies", "label": "List of circulating currencies", "out": 236, "in": 8, "cat": "Business_Studies", "tipo": "hub"}, {"raw": "List_of_sovereign_states", "label": "List of sovereign states", "out": 216, "in": 43, "cat": "Geography", "tipo": "hub"}, {"raw": "Africa", "label": "Africa", "out": 212, "in": 477, "cat": "Geography", "tipo": "autoridade"}, {"raw": "List_of_countries_by_system_of_government", "label": "List of countries by system of government", "out": 207, "in": 246, "cat": "Citizenship", "tipo": "autoridade"}, {"raw": "Lebanon", "label": "Lebanon", "out": 192, "in": 114, "cat": "Countries", "tipo": "hub"}, {"raw": "Interpol", "label": "Interpol", "out": 191, "in": 13, "cat": "Citizenship", "tipo": "hub"}, {"raw": "Armenia", "label": "Armenia", "out": 186, "in": 99, "cat": "Countries", "tipo": "hub"}, {"raw": "Georgia_%28country%29", "label": "Georgia (country)", "out": 180, "in": 84, "cat": "Countries", "tipo": "hub"}, {"raw": "Turkey", "label": "Turkey", "out": 172, "in": 249, "cat": "Countries", "tipo": "autoridade"}, {"raw": "England", "label": "England", "out": 172, "in": 751, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Israel", "label": "Israel", "out": 169, "in": 236, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Germany", "label": "Germany", "out": 169, "in": 743, "cat": "Countries", "tipo": "autoridade"}];
+const TOP_IN = [{"raw": "United_States", "label": "United States", "out": 294, "in": 1551, "cat": "Countries", "tipo": "autoridade"}, {"raw": "United_Kingdom", "label": "United Kingdom", "out": 168, "in": 972, "cat": "Countries", "tipo": "autoridade"}, {"raw": "France", "label": "France", "out": 85, "in": 959, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Europe", "label": "Europe", "out": 159, "in": 933, "cat": "Geography", "tipo": "autoridade"}, {"raw": "England", "label": "England", "out": 172, "in": 751, "cat": "Geography", "tipo": "autoridade"}, {"raw": "World_War_II", "label": "World War II", "out": 119, "in": 751, "cat": "History", "tipo": "autoridade"}, {"raw": "Germany", "label": "Germany", "out": 169, "in": 743, "cat": "Countries", "tipo": "autoridade"}, {"raw": "India", "label": "India", "out": 81, "in": 611, "cat": "Geography", "tipo": "autoridade"}, {"raw": "English_language", "label": "English language", "out": 118, "in": 598, "cat": "Language_and_literature", "tipo": "autoridade"}, {"raw": "London", "label": "London", "out": 102, "in": 587, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Japan", "label": "Japan", "out": 98, "in": 573, "cat": "Geography", "tipo": "autoridade"}, {"raw": "Canada", "label": "Canada", "out": 63, "in": 571, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Australia", "label": "Australia", "out": 86, "in": 563, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Italy", "label": "Italy", "out": 85, "in": 550, "cat": "Countries", "tipo": "autoridade"}, {"raw": "Spain", "label": "Spain", "out": 89, "in": 539, "cat": "Countries", "tipo": "autoridade"}];
+const DIJKSTRA = [{"source": "United_States", "target": "Africa", "distance": 0.00969, "path_length": 3, "path": ["United_States", "Europe", "Africa"]}, {"source": "Science", "target": "Philosophy", "distance": 0.025, "path_length": 2, "path": ["Science", "Philosophy"]}, {"source": "Mathematics", "target": "Music", "distance": 0.027501, "path_length": 3, "path": ["Mathematics", "Australia", "Music"]}, {"source": "Europe", "target": "Brazil", "distance": 0.013186, "path_length": 3, "path": ["Europe", "Bulgaria", "Brazil"]}, {"source": "Film", "target": "Science", "distance": 0.05862, "path_length": 3, "path": ["Film", "19th_century", "Science"]}];
+const BFS = [{"source": "United_States", "layer_sizes": {"0": 1, "1": 294, "2": 1884, "3": 1536, "4": 297, "5": 40, "6": 3}, "visited_count": 4055, "num_layers": 7}, {"source": "Science", "layer_sizes": {"0": 1, "1": 40, "2": 913, "3": 2299, "4": 690, "5": 103, "6": 8, "7": 1}, "visited_count": 4055, "num_layers": 8}, {"source": "Africa", "layer_sizes": {"0": 1, "1": 212, "2": 1605, "3": 1812, "4": 357, "5": 58, "6": 10}, "visited_count": 4055, "num_layers": 7}];
+const DFS = [{"source": "United_States", "edge_class_counts": {"tree": 4054, "back": 65007, "forward": 38854, "cross": 3991}}, {"source": "Science", "edge_class_counts": {"tree": 4054, "back": 64869, "forward": 39267, "cross": 3716}}, {"source": "Africa", "edge_class_counts": {"tree": 4054, "back": 64887, "forward": 39333, "cross": 3632}}];
+const PERF = [{"algorithm": "BFS", "task": "source=United_States", "time_s": 0.020888, "mem_kb": 281.31}, {"algorithm": "BFS", "task": "source=Science", "time_s": 0.027501, "mem_kb": 281.03}, {"algorithm": "BFS", "task": "source=Africa", "time_s": 0.017023, "mem_kb": 281.74}, {"algorithm": "DFS", "task": "source=United_States", "time_s": 1.837479, "mem_kb": 16992.15}, {"algorithm": "DFS", "task": "source=Science", "time_s": 2.016166, "mem_kb": 17102.1}, {"algorithm": "DFS", "task": "source=Africa", "time_s": 1.928263, "mem_kb": 16998.3}, {"algorithm": "Dijkstra", "task": "United_States->Africa", "time_s": 0.241024, "mem_kb": 19135.14}, {"algorithm": "Dijkstra", "task": "Science->Philosophy", "time_s": 0.275929, "mem_kb": 18900.82}, {"algorithm": "Dijkstra", "task": "Mathematics->Music", "time_s": 0.247149, "mem_kb": 18900.88}, {"algorithm": "Dijkstra", "task": "Europe->Brazil", "time_s": 0.251024, "mem_kb": 18900.88}, {"algorithm": "Dijkstra", "task": "Film->Science", "time_s": 0.242949, "mem_kb": 18900.88}, {"algorithm": "Bellman-Ford", "task": "United_States->Driving_on_the_left_or_right", "time_s": 0.026487, "mem_kb": 1052.77}, {"algorithm": "Bellman-Ford", "task": "neg_no_cycle_BF_A->BF_D", "time_s": 0.00023, "mem_kb": 1.33}, {"algorithm": "Bellman-Ford", "task": "neg_cycle_detection", "time_s": 0.000138, "mem_kb": 0.9}];
+const GRAFO_URL = "grafo_interativo.html";
+
+
+Chart.defaults.color = '#3d5570';
+Chart.defaults.borderColor = '#162035';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const ALG_COLORS = { BFS:'#22c55e', DFS:'#fbbf24', Dijkstra:'#38bdf8', 'Bellman-Ford':'#f87171' };
+const SRC_COLORS = ['#2dd4bf','#38bdf8','#c084fc'];
+const EDGE_COLORS = { tree:'#22c55e', back:'#f87171', forward:'#fbbf24', cross:'#38bdf8' };
+
+function catColor(c){ return CAT_COLORS[c] || '#94a3b8'; }
+function fmt(n){ return n.toLocaleString('pt-BR'); }
+
+/* ── KPIs ── */
+function buildKPIs(){
+  const hubOut = TOP_OUT[0];
+  const authIn = TOP_IN[0];
+  const shortest = [...DIJKSTRA].sort((a,b)=>a.distance-b.distance)[0];
+  const kpis = [
+    {label:'Artigos', value:fmt(GLOBAL.num_nodes), sub:'nós do grafo dirigido'},
+    {label:'Links', value:fmt(GLOBAL.num_edges), sub:'arestas direcionadas'},
+    {label:'Densidade Global', value:(GLOBAL.densidade*100).toFixed(2)+'%', sub:'do grafo dirigido completo'},
+    {label:'Grau Médio', value:GLOBAL.avg.toFixed(2), sub:'links de saída por artigo'},
+    {label:'Maior Hub', value:hubOut.label, sub:`grau de saída ${hubOut.out}`},
+    {label:'Maior Autoridade', value:authIn.label, sub:`grau de entrada ${fmt(authIn.in)}`},
+    {label:'Caminho Mais Curto', value:shortest.distance.toFixed(4), sub:`${shortest.source.replace(/_/g,' ')} → ${shortest.target.replace(/_/g,' ')}`},
+    {label:'Categorias', value:GLOBAL.n_categorias, sub:'temas cobertos'},
+  ];
+  const row = document.getElementById('kpi-row');
+  kpis.forEach(k=>{
+    row.innerHTML += `<div class="kpi"><div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="${k.value.length>10?'font-size:16px;':''}">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div></div>`;
+  });
+}
+
+function buildInsights(){
+  const hub = TOP_OUT[0];
+  const topCats = Object.entries(CAT_COUNTS).filter(([k])=>k!=='other').sort((a,b)=>b[1]-a[1]);
+  const c1=topCats[0], c2=topCats[1];
+  const pct2 = ((c1[1]+c2[1])/GLOBAL.num_nodes*100).toFixed(0);
+  const back = DFS[0].edge_class_counts.back;
+  const items = [
+    {title:'Hub dominante', text:`${hub.label} lidera com grau de saída ${hub.out} — ${(hub.out/GLOBAL.avg).toFixed(0)}× a média (${GLOBAL.avg.toFixed(1)}). Artigos geopolíticos dominam o topo.`},
+    {title:'Cauda longa (scale-free)', text:`A mediana de grau é ${GLOBAL.median}, mas o máximo chega a ${GLOBAL.max}. Padrão clássico de redes de conhecimento: poucos hubs, muitos nós comuns.`},
+    {title:'Categorias dominantes', text:`${c1[0].replace(/_/g,' ')} (${fmt(c1[1])}) e ${c2[0].replace(/_/g,' ')} (${fmt(c2[1])}) somam ${pct2}% de todos os artigos.`},
+    {title:'Passar por hubs barateia', text:`No modelo 1/grau, caminhos que cruzam hubs têm peso menor por aresta — o custo mínimo nem sempre é o de menos saltos.`},
+    {title:'Rede fortemente cíclica', text:`O DFS classifica ~${fmt(back)} arestas como "back": quase qualquer sequência de cliques entre artigos fecha um ciclo.`},
+  ];
+  const strip = document.getElementById('insight-strip');
+  items.forEach(i=>{
+    strip.innerHTML += `<div class="insight-item"><div class="insight-text"><strong>${i.title}</strong>${i.text}</div></div>`;
+  });
+}
+
+/* ── Estado de filtro ── */
+const filterState = { cat:'all', tipo:'all', grauMin:0 };
+
+function filteredArticles(){
+  return ARTICLES.filter(a=>{
+    if(filterState.cat!=='all' && a.cat!==filterState.cat) return false;
+    if(filterState.tipo!=='all' && a.tipo!==filterState.tipo) return false;
+    if(a.out < filterState.grauMin) return false;
+    return true;
+  });
+}
+
+let grausChart=null;
+function buildGrausChart(){
+  const rows = filteredArticles().slice().sort((a,b)=>b.out-a.out).slice(0,18);
+  const labels = rows.map(r=>r.label);
+  const values = rows.map(r=>r.out);
+  const colors = rows.map(r=>catColor(r.cat));
+  if(grausChart){
+    grausChart.data.labels=labels;
+    grausChart.data.datasets[0].data=values;
+    grausChart.data.datasets[0].backgroundColor=colors;
+    grausChart._rows=rows;
+    grausChart.update();
+    return;
+  }
+  const ctx=document.getElementById('chart-graus');
+  grausChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'Grau de saída',data:values,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const r=grausChart._rows[ctx.dataIndex];
+        return ` saída ${r.out} · entrada ${r.in} · ${r.cat.replace(/_/g,' ')} [${r.tipo}]`;
+      }}}},
+      scales:{x:{grid:{color:'#162035'}},y:{grid:{display:false}}}}
+  });
+  grausChart._rows=rows;
+}
+
+function buildTopLists(){
+  const out=document.getElementById('top-out-list');
+  TOP_OUT.slice(0,10).forEach((r,i)=>{
+    out.innerHTML += `<div class="mini-row"><span class="mini-rank">${i+1}</span>
+      <span class="mini-name" title="${r.label} · ${r.cat.replace(/_/g,' ')}" style="color:${catColor(r.cat)}">${r.label}</span>
+      <span class="mini-val">${r.out}</span></div>`;
+  });
+  const inn=document.getElementById('top-in-list');
+  TOP_IN.slice(0,10).forEach((r,i)=>{
+    inn.innerHTML += `<div class="mini-row"><span class="mini-rank">${i+1}</span>
+      <span class="mini-name" title="${r.label} · ${r.cat.replace(/_/g,' ')}" style="color:${catColor(r.cat)}">${r.label}</span>
+      <span class="mini-val" style="color:var(--accent2)">${fmt(r.in)}</span></div>`;
+  });
+}
+
+function buildCategorias(){
+  const entries=Object.entries(CAT_COUNTS).filter(([k])=>k!=='other').sort((a,b)=>b[1]-a[1]);
+  const maxC=Math.max(...entries.map(e=>e[1]));
+  const list=document.getElementById('cat-list');
+  entries.forEach(([cat,cnt])=>{
+    const cor=catColor(cat);
+    const pct=(cnt/maxC*100).toFixed(0);
+    const share=(cnt/GLOBAL.num_nodes*100).toFixed(1);
+    list.innerHTML += `<div class="reg-row">
+      <span class="reg-name" style="color:${cor}" title="${cat.replace(/_/g,' ')}">${cat.replace(/_/g,' ')}</span>
+      <div class="reg-bar-bg"><div class="reg-bar-fill" style="width:${pct}%;background:${cor};"></div></div>
+      <span class="reg-val">${fmt(cnt)}</span>
+      <span class="reg-val" style="color:${cor}">${share}%</span>
+    </div>`;
+  });
+
+  new Chart(document.getElementById('chart-cat'),{
+    type:'bar',
+    data:{labels:entries.map(e=>e[0].replace(/_/g,' ')),
+      datasets:[{label:'Artigos',data:entries.map(e=>e[1]),
+        backgroundColor:entries.map(e=>catColor(e[0])),borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const share=(ctx.parsed.x/GLOBAL.num_nodes*100).toFixed(1);
+        return ` ${fmt(ctx.parsed.x)} artigos (${share}%)`;
+      }}}},
+      scales:{x:{grid:{color:'#162035'}},y:{grid:{display:false}}}}
+  });
+}
+
+function buildRotas(){
+  const maxD=Math.max(...DIJKSTRA.map(d=>d.distance));
+  const list=document.getElementById('rota-list');
+  DIJKSTRA.forEach(d=>{
+    const chips=(d.path||[]).map((c,i,arr)=>i<arr.length-1
+      ? `<span class="rota-chip">${c.replace(/_/g,' ')}</span><span class="rota-arrow">→</span>`
+      : `<span class="rota-chip">${c.replace(/_/g,' ')}</span>`).join('');
+    const pct=(d.distance/maxD*100).toFixed(0);
+    list.innerHTML += `<div class="rota-row">
+      <div class="rota-path">${chips}</div>
+      <div><div style="font-size:10px;color:var(--accent);text-align:right;margin-bottom:2px;">${d.distance.toFixed(4)}</div>
+      <div class="custo-bar-bg"><div class="custo-bar-fill" style="width:${pct}%;"></div></div></div>
+    </div>`;
+  });
+
+  const pts=DIJKSTRA.map(d=>({x:d.path_length-1,y:d.distance,label:`${d.source.replace(/_/g,' ')}→${d.target.replace(/_/g,' ')}`}));
+  new Chart(document.getElementById('chart-rotas'),{
+    type:'scatter',
+    data:{datasets:[{label:'Rotas',data:pts,backgroundColor:'#c084fc',pointRadius:9,pointHoverRadius:12}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw.label}: custo ${ctx.raw.y.toFixed(4)}, ${ctx.raw.x} salto(s)`}}},
+      scales:{x:{title:{display:true,text:'Saltos',color:'#3d5570'},grid:{color:'#162035'},ticks:{stepSize:1}},
+        y:{title:{display:true,text:'Custo ponderado',color:'#3d5570'},grid:{color:'#162035'}}}}
+  });
+}
+
+function buildBFS(){
+  const maxLayer=Math.max(...BFS.map(b=>Math.max(...Object.keys(b.layer_sizes).map(Number))));
+  const labels=Array.from({length:maxLayer+1},(_,i)=>'Camada '+i);
+  const datasets=BFS.map((b,i)=>({
+    label:b.source.replace(/_/g,' '),
+    data:labels.map((_,k)=>b.layer_sizes[k]||0),
+    backgroundColor:SRC_COLORS[i%SRC_COLORS.length],borderRadius:3,borderSkipped:false,
+  }));
+  new Chart(document.getElementById('chart-bfs'),{
+    type:'bar',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)} nós`}}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'#162035'},title:{display:true,text:'nós descobertos',color:'#3d5570'}}}}
+  });
+}
+
+function buildDFS(){
+  const classes=['tree','back','forward','cross'];
+  const datasets=classes.map(cl=>({
+    label:cl,
+    data:DFS.map(d=>d.edge_class_counts[cl]||0),
+    backgroundColor:EDGE_COLORS[cl],borderRadius:3,borderSkipped:false,
+  }));
+  new Chart(document.getElementById('chart-dfs'),{
+    type:'bar',
+    data:{labels:DFS.map(d=>d.source.replace(/_/g,' ')),datasets},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.parsed.x)} arestas`}}},
+      scales:{x:{stacked:true,grid:{color:'#162035'}},y:{stacked:true,grid:{display:false}}}}
+  });
+}
+
+function perfByAlg(){
+  const map={};
+  PERF.forEach(p=>{
+    if(!map[p.algorithm]) map[p.algorithm]={t:[],m:[]};
+    map[p.algorithm].t.push(p.time_s);
+    map[p.algorithm].m.push(p.mem_kb);
+  });
+  const algs=Object.keys(map);
+  return algs.map(a=>({
+    alg:a,
+    time:map[a].t.reduce((s,v)=>s+v,0)/map[a].t.length,
+    mem:(map[a].m.reduce((s,v)=>s+v,0)/map[a].m.length)/1024,
+  }));
+}
+
+function buildPerf(){
+  const data=perfByAlg();
+  const cpx={BFS:'O(V+E)',DFS:'O(V+E)',Dijkstra:'O((V+E)·logV)','Bellman-Ford':'O(V·E)'};
+  new Chart(document.getElementById('chart-perf-time'),{
+    type:'bar',
+    data:{labels:data.map(d=>d.alg),datasets:[{label:'Tempo (s)',data:data.map(d=>d.time),
+      backgroundColor:data.map(d=>ALG_COLORS[d.alg]||'#94a3b8'),borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(4)} s  ·  ${cpx[ctx.label]||''}`}}},
+      scales:{y:{type:'logarithmic',grid:{color:'#162035'},title:{display:true,text:'segundos (log)',color:'#3d5570'}},
+        x:{grid:{display:false}}}}
+  });
+  new Chart(document.getElementById('chart-perf-mem'),{
+    type:'bar',
+    data:{labels:data.map(d=>d.alg),datasets:[{label:'Memória (MB)',data:data.map(d=>d.mem),
+      backgroundColor:data.map(d=>ALG_COLORS[d.alg]||'#94a3b8'),borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} MB`}}},
+      scales:{y:{grid:{color:'#162035'},title:{display:true,text:'MB',color:'#3d5570'},beginAtZero:true},
+        x:{grid:{display:false}}}}
+  });
+}
+
+function rebuildTable(textFilter){
+  const rows=filteredArticles().slice().sort((a,b)=>b.out-a.out);
+  const tbody=document.getElementById('article-tbody');
+  tbody.innerHTML='';
+  rows.filter(r=>!textFilter||r.label.toLowerCase().includes(textFilter)||r.cat.toLowerCase().includes(textFilter))
+    .forEach(r=>{
+      const cor=catColor(r.cat);
+      const ratio=r.out>0?(r.in/r.out):0;
+      tbody.innerHTML += `<tr>
+        <td><b style="color:var(--accent2);">${r.label}</b></td>
+        <td><span style="color:${cor};font-weight:600;">${r.cat.replace(/_/g,' ')}</span></td>
+        <td style="color:var(--accent);">${r.out}</td>
+        <td style="color:var(--accent2);">${fmt(r.in)}</td>
+        <td>${r.tipo==='hub'?'<span class="badge hub-badge">Hub</span>':'<span class="badge auth-badge">Autoridade</span>'}</td>
+        <td style="color:var(--muted);">${ratio.toFixed(2)}×</td>
+      </tr>`;
+    });
+}
+
+function applyFilters(){
+  document.getElementById('fc-num').textContent=filteredArticles().length;
+  buildGrausChart();
+  rebuildTable(document.getElementById('search-table').value.toLowerCase().trim());
+}
+
+function initFilterUI(){
+  const wrap=document.getElementById('filter-cats');
+  Object.keys(CAT_COUNTS).filter(c=>c!=='other').forEach(cat=>{
+    const chip=document.createElement('span');
+    chip.className='chip';chip.dataset.cat=cat;chip.textContent=cat.replace(/_/g,' ');
+    chip.style.borderColor=catColor(cat);
+    chip.addEventListener('click',()=>{
+      filterState.cat=cat;
+      wrap.querySelectorAll('.chip').forEach(c=>{c.classList.remove('active');c.style.background='';c.style.color='';});
+      chip.classList.add('active');chip.style.background=catColor(cat);chip.style.color='#04201c';
+      applyFilters();
+    });
+    wrap.appendChild(chip);
+  });
+  wrap.querySelector('[data-cat="all"]').addEventListener('click',()=>{
+    filterState.cat='all';
+    wrap.querySelectorAll('.chip').forEach(c=>{c.classList.remove('active');c.style.background='';c.style.color='';});
+    wrap.querySelector('[data-cat="all"]').classList.add('active');
+    applyFilters();
+  });
+
+  ['chip-todos','chip-hub','chip-auth'].forEach(id=>{
+    document.getElementById(id).addEventListener('click',()=>{
+      filterState.tipo={'chip-todos':'all','chip-hub':'hub','chip-auth':'autoridade'}[id];
+      ['chip-todos','chip-hub','chip-auth'].forEach(c=>document.getElementById(c).classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      applyFilters();
+    });
+  });
+
+  const slider=document.getElementById('slider-grau');
+  const sliderVal=document.getElementById('slider-grau-val');
+  slider.max=GLOBAL.max;
+  slider.addEventListener('input',()=>{
+    filterState.grauMin=parseInt(slider.value);
+    sliderVal.textContent=slider.value;
+    applyFilters();
+  });
+
+  document.getElementById('btn-reset-filters').addEventListener('click',()=>{
+    filterState.cat='all';filterState.tipo='all';filterState.grauMin=0;
+    slider.value=0;sliderVal.textContent='0';
+    wrap.querySelectorAll('.chip').forEach(c=>{c.classList.remove('active');c.style.background='';c.style.color='';});
+    wrap.querySelector('[data-cat="all"]').classList.add('active');
+    ['chip-todos','chip-hub','chip-auth'].forEach(c=>document.getElementById(c).classList.remove('active'));
+    document.getElementById('chip-todos').classList.add('active');
+    document.getElementById('search-table').value='';
+    applyFilters();
+  });
+
+  document.getElementById('search-table').addEventListener('input',e=>{
+    rebuildTable(e.target.value.toLowerCase().trim());
+  });
+}
+
+buildKPIs();
+buildInsights();
+buildGrausChart();
+buildTopLists();
+buildCategorias();
+buildRotas();
+buildBFS();
+buildDFS();
+buildPerf();
+rebuildTable('');
+initFilterUI();
+document.getElementById('fc-num').textContent=ARTICLES.length;
+</script>
+</body>
+</html>

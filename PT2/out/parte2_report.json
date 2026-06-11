@@ -1,0 +1,762 @@
+{
+  "dataset": "Wikispeedia — Wikipedia Navigation Links",
+  "graph_description": {
+    "num_nodes": 4604,
+    "num_edges": 119882,
+    "directed": true,
+    "degree_stats": {
+      "min": 0,
+      "max": 294,
+      "avg": 26.04,
+      "median": 19,
+      "distribution": {
+        "45": 41,
+        "28": 68,
+        "18": 119,
+        "13": 156,
+        "37": 42,
+        "29": 82,
+        "7": 133,
+        "8": 136,
+        "48": 35,
+        "60": 16,
+        "40": 45,
+        "9": 150,
+        "46": 26,
+        "2": 47,
+        "30": 59,
+        "17": 124,
+        "23": 109,
+        "35": 46,
+        "39": 44,
+        "11": 163,
+        "12": 151,
+        "41": 40,
+        "38": 40,
+        "14": 164,
+        "3": 60,
+        "20": 110,
+        "26": 91,
+        "32": 59,
+        "15": 128,
+        "50": 25,
+        "33": 58,
+        "6": 126,
+        "21": 101,
+        "42": 33,
+        "163": 1,
+        "25": 74,
+        "27": 72,
+        "31": 73,
+        "34": 57,
+        "19": 118,
+        "22": 107,
+        "5": 110,
+        "16": 157,
+        "43": 39,
+        "4": 86,
+        "77": 5,
+        "155": 2,
+        "44": 41,
+        "68": 12,
+        "10": 154,
+        "24": 96,
+        "49": 28,
+        "84": 4,
+        "36": 40,
+        "47": 29,
+        "1": 22,
+        "54": 26,
+        "95": 1,
+        "236": 1,
+        "75": 4,
+        "86": 4,
+        "71": 8,
+        "70": 4,
+        "133": 2,
+        "102": 2,
+        "144": 1,
+        "69": 4,
+        "65": 9,
+        "140": 1,
+        "0": 17,
+        "89": 5,
+        "59": 7,
+        "114": 2,
+        "91": 4,
+        "118": 3,
+        "63": 13,
+        "57": 22,
+        "61": 12,
+        "92": 2,
+        "51": 23,
+        "109": 3,
+        "55": 18,
+        "88": 2,
+        "82": 3,
+        "116": 2,
+        "98": 4,
+        "78": 5,
+        "151": 2,
+        "58": 12,
+        "62": 10,
+        "139": 2,
+        "147": 1,
+        "79": 7,
+        "105": 2,
+        "72": 8,
+        "83": 2,
+        "80": 4,
+        "64": 11,
+        "99": 3,
+        "131": 1,
+        "122": 1,
+        "159": 1,
+        "96": 3,
+        "53": 17,
+        "132": 1,
+        "52": 17,
+        "119": 2,
+        "56": 20,
+        "113": 4,
+        "100": 2,
+        "121": 1,
+        "180": 1,
+        "192": 1,
+        "73": 4,
+        "125": 1,
+        "137": 3,
+        "148": 1,
+        "101": 5,
+        "112": 3,
+        "216": 1,
+        "87": 7,
+        "160": 2,
+        "67": 8,
+        "134": 2,
+        "74": 7,
+        "294": 1,
+        "255": 1,
+        "66": 8,
+        "85": 6,
+        "145": 2,
+        "186": 1,
+        "156": 1,
+        "93": 3,
+        "162": 1,
+        "76": 2,
+        "126": 1,
+        "129": 3,
+        "207": 1,
+        "81": 2,
+        "124": 1,
+        "90": 4,
+        "108": 3,
+        "94": 1,
+        "97": 1,
+        "107": 1,
+        "244": 1,
+        "169": 2,
+        "212": 1,
+        "172": 2,
+        "138": 1,
+        "103": 1,
+        "168": 1,
+        "111": 1,
+        "167": 1,
+        "191": 1
+      }
+    },
+    "directed_degree_summary": {
+      "top_out_degree": [
+        {
+          "node": "United_States",
+          "degree": 294
+        },
+        {
+          "node": "Driving_on_the_left_or_right",
+          "degree": 255
+        },
+        {
+          "node": "List_of_countries",
+          "degree": 244
+        },
+        {
+          "node": "List_of_circulating_currencies",
+          "degree": 236
+        },
+        {
+          "node": "List_of_sovereign_states",
+          "degree": 216
+        },
+        {
+          "node": "Africa",
+          "degree": 212
+        },
+        {
+          "node": "List_of_countries_by_system_of_government",
+          "degree": 207
+        },
+        {
+          "node": "Lebanon",
+          "degree": 192
+        },
+        {
+          "node": "Interpol",
+          "degree": 191
+        },
+        {
+          "node": "Armenia",
+          "degree": 186
+        }
+      ],
+      "top_in_degree": [
+        {
+          "node": "United_States",
+          "degree": 1551
+        },
+        {
+          "node": "United_Kingdom",
+          "degree": 972
+        },
+        {
+          "node": "France",
+          "degree": 959
+        },
+        {
+          "node": "Europe",
+          "degree": 933
+        },
+        {
+          "node": "England",
+          "degree": 751
+        },
+        {
+          "node": "World_War_II",
+          "degree": 751
+        },
+        {
+          "node": "Germany",
+          "degree": 743
+        },
+        {
+          "node": "India",
+          "degree": 611
+        },
+        {
+          "node": "English_language",
+          "degree": 598
+        },
+        {
+          "node": "London",
+          "degree": 587
+        }
+      ],
+      "avg_in_degree": 26.04,
+      "avg_out_degree": 26.04
+    },
+    "weight_summary": {
+      "min": 0.003401,
+      "max": 1.0,
+      "avg": 0.038263,
+      "model": "peso = 1 / grau_de_saida da origem",
+      "interpretation": "arestas saindo de artigos com poucos links recebem maior peso; arestas saindo de hubs recebem menor peso individual"
+    }
+  },
+  "bfs": [
+    {
+      "source": "United_States",
+      "visited_count": 4055,
+      "num_layers": 7,
+      "layer_sizes": {
+        "0": 1,
+        "1": 294,
+        "2": 1884,
+        "3": 1536,
+        "4": 297,
+        "5": 40,
+        "6": 3
+      },
+      "order_sample": [
+        "United_States",
+        "Abraham_Lincoln",
+        "Advertising",
+        "Agriculture",
+        "American_Civil_War",
+        "American_English",
+        "American_Revolutionary_War",
+        "American_Samoa",
+        "American_football",
+        "American_popular_music",
+        "Amtrak",
+        "Anguilla",
+        "Antarctica",
+        "Antigua_and_Barbuda",
+        "Apollo_11",
+        "Arctic_Ocean",
+        "Argentina",
+        "Aruba",
+        "Atlanta%2C_Georgia",
+        "Atlantic_Ocean"
+      ],
+      "time_s": 0.020888,
+      "mem_kb": 281.31
+    },
+    {
+      "source": "Science",
+      "visited_count": 4055,
+      "num_layers": 8,
+      "layer_sizes": {
+        "0": 1,
+        "1": 40,
+        "2": 913,
+        "3": 2299,
+        "4": 690,
+        "5": 103,
+        "6": 8,
+        "7": 1
+      },
+      "order_sample": [
+        "Science",
+        "Age_of_Enlightenment",
+        "Archaeology",
+        "Atom",
+        "Bertrand_Russell",
+        "Biology",
+        "Calculus",
+        "Chemistry",
+        "Computer_science",
+        "Engineering",
+        "Ethics",
+        "History_of_science",
+        "Italy",
+        "John_Locke",
+        "Karl_Popper",
+        "Latin",
+        "Linguistics",
+        "Manufacturing",
+        "Mathematics",
+        "Middle_Ages"
+      ],
+      "time_s": 0.027501,
+      "mem_kb": 281.03
+    },
+    {
+      "source": "Africa",
+      "visited_count": 4055,
+      "num_layers": 7,
+      "layer_sizes": {
+        "0": 1,
+        "1": 212,
+        "2": 1605,
+        "3": 1812,
+        "4": 357,
+        "5": 58,
+        "6": 10
+      },
+      "order_sample": [
+        "Africa",
+        "Abidjan",
+        "Abuja",
+        "Accra",
+        "Addis_Ababa",
+        "African_Great_Lakes",
+        "African_Union",
+        "Afrikaans",
+        "Agriculture",
+        "Algeria",
+        "Algiers",
+        "Ancient_Egypt",
+        "Ancient_Greece",
+        "Ancient_Rome",
+        "Anglican_Communion",
+        "Angola",
+        "Antananarivo",
+        "Anthropology",
+        "Arabic_language",
+        "Asia"
+      ],
+      "time_s": 0.017023,
+      "mem_kb": 281.74
+    }
+  ],
+  "dfs": [
+    {
+      "source": "United_States",
+      "visited_count": 4055,
+      "has_cycle": true,
+      "cycles_sample": [
+        [
+          "11th_century",
+          "10th_century"
+        ],
+        [
+          "12th_century",
+          "10th_century"
+        ],
+        [
+          "12th_century",
+          "11th_century"
+        ],
+        [
+          "13th_century",
+          "12th_century"
+        ],
+        [
+          "14th_century",
+          "13th_century"
+        ]
+      ],
+      "edge_class_counts": {
+        "tree": 4054,
+        "back": 65007,
+        "forward": 38854,
+        "cross": 3991
+      },
+      "order_sample": [
+        "United_States",
+        "Abraham_Lincoln",
+        "Aircraft_carrier",
+        "Afghanistan",
+        "18th_century",
+        "10th_century",
+        "11th_century",
+        "12th_century",
+        "13th_century",
+        "14th_century",
+        "15th_century",
+        "16th_century",
+        "17th_century",
+        "19th_century",
+        "1st_century",
+        "1st_century_BC",
+        "20th_century",
+        "21st_century",
+        "2004_Indian_Ocean_earthquake",
+        "1755_Lisbon_earthquake"
+      ],
+      "time_s": 1.837479,
+      "mem_kb": 16992.15
+    },
+    {
+      "source": "Science",
+      "visited_count": 4055,
+      "has_cycle": true,
+      "cycles_sample": [
+        [
+          "11th_century",
+          "10th_century"
+        ],
+        [
+          "12th_century",
+          "10th_century"
+        ],
+        [
+          "12th_century",
+          "11th_century"
+        ],
+        [
+          "13th_century",
+          "12th_century"
+        ],
+        [
+          "14th_century",
+          "13th_century"
+        ]
+      ],
+      "edge_class_counts": {
+        "tree": 4054,
+        "back": 64869,
+        "forward": 39267,
+        "cross": 3716
+      },
+      "order_sample": [
+        "Science",
+        "Age_of_Enlightenment",
+        "Adam_Smith",
+        "Aristotle",
+        "Aesthetics",
+        "Ancient_Egypt",
+        "15th_century",
+        "10th_century",
+        "11th_century",
+        "12th_century",
+        "13th_century",
+        "14th_century",
+        "Abacus",
+        "Africa",
+        "Abidjan",
+        "Accra",
+        "17th_century",
+        "16th_century",
+        "18th_century",
+        "1755_Lisbon_earthquake"
+      ],
+      "time_s": 2.016166,
+      "mem_kb": 17102.1
+    },
+    {
+      "source": "Africa",
+      "visited_count": 4055,
+      "has_cycle": true,
+      "cycles_sample": [
+        [
+          "11th_century",
+          "10th_century"
+        ],
+        [
+          "12th_century",
+          "10th_century"
+        ],
+        [
+          "12th_century",
+          "11th_century"
+        ],
+        [
+          "13th_century",
+          "12th_century"
+        ],
+        [
+          "14th_century",
+          "13th_century"
+        ]
+      ],
+      "edge_class_counts": {
+        "tree": 4054,
+        "back": 64887,
+        "forward": 39333,
+        "cross": 3632
+      },
+      "order_sample": [
+        "Africa",
+        "Abidjan",
+        "Accra",
+        "17th_century",
+        "10th_century",
+        "11th_century",
+        "12th_century",
+        "13th_century",
+        "14th_century",
+        "15th_century",
+        "16th_century",
+        "18th_century",
+        "1755_Lisbon_earthquake",
+        "Atlantic_Ocean",
+        "Aberdeen",
+        "Bah%C3%A1%27%C3%AD_Faith",
+        "Addis_Ababa",
+        "African_Union",
+        "AIDS",
+        "20th_century"
+      ],
+      "time_s": 1.928263,
+      "mem_kb": 16998.3
+    }
+  ],
+  "dijkstra": [
+    {
+      "source": "United_States",
+      "target": "Africa",
+      "distance": 0.00969,
+      "path": [
+        "United_States",
+        "Europe",
+        "Africa"
+      ],
+      "path_length": 3,
+      "time_s": 0.241024,
+      "mem_kb": 19135.14
+    },
+    {
+      "source": "Science",
+      "target": "Philosophy",
+      "distance": 0.025,
+      "path": [
+        "Science",
+        "Philosophy"
+      ],
+      "path_length": 2,
+      "time_s": 0.275929,
+      "mem_kb": 18900.82
+    },
+    {
+      "source": "Mathematics",
+      "target": "Music",
+      "distance": 0.027501,
+      "path": [
+        "Mathematics",
+        "Australia",
+        "Music"
+      ],
+      "path_length": 3,
+      "time_s": 0.247149,
+      "mem_kb": 18900.88
+    },
+    {
+      "source": "Europe",
+      "target": "Brazil",
+      "distance": 0.013186,
+      "path": [
+        "Europe",
+        "Bulgaria",
+        "Brazil"
+      ],
+      "path_length": 3,
+      "time_s": 0.251024,
+      "mem_kb": 18900.88
+    },
+    {
+      "source": "Film",
+      "target": "Science",
+      "distance": 0.05862,
+      "path": [
+        "Film",
+        "19th_century",
+        "Science"
+      ],
+      "path_length": 3,
+      "time_s": 0.242949,
+      "mem_kb": 18900.88
+    }
+  ],
+  "bellman_ford": [
+    {
+      "source": "United_States",
+      "target": "Driving_on_the_left_or_right",
+      "has_negative_cycle": false,
+      "distance": Infinity,
+      "path": null,
+      "time_s": 0.026487,
+      "mem_kb": 1052.77,
+      "scenario": "normal_weights",
+      "note": "Executado em subgrafo dos 200 nós mais conectados"
+    },
+    {
+      "source": "BF_A",
+      "target": "BF_D",
+      "has_negative_cycle": false,
+      "distance": 4.0,
+      "path": [
+        "BF_A",
+        "BF_C",
+        "BF_B",
+        "BF_D"
+      ],
+      "time_s": 0.00023,
+      "mem_kb": 1.33,
+      "scenario": "negative_weight_no_cycle",
+      "injected_edge": "BF_C->BF_B w=-1.0",
+      "note": "Executado em grafo controlado sem ciclo negativo para validar corretude"
+    },
+    {
+      "scenario": "negative_cycle_detected",
+      "nodes_in_cycle": [
+        "United_States",
+        "Science",
+        "Africa"
+      ],
+      "injected_edges": [
+        "United_States->Science",
+        "Science->Africa",
+        "Africa->United_States"
+      ],
+      "has_negative_cycle": true,
+      "time_s": 0.000138,
+      "mem_kb": 0.9
+    }
+  ],
+  "avd_notes": [
+    "Cores de algoritmos foram mantidas consistentes nos graficos comparativos.",
+    "Graficos de barras e linhas usam eixos rotulados para favorecer comparabilidade.",
+    "O heatmap separa distancia infinita de distancia zero para evitar leitura enganosa.",
+    "A visualizacao interativa reduz ruido com amostragem, transparencia e filtros por categoria.",
+    "Bellman-Ford aparece observado porque foi executado em subgrafo controlado pelo custo O(V*E).",
+    "A principal limitacao visual e a densidade: 119.882 arestas sobrepostas tornam o grafo completo ilegivel sem filtros."
+  ],
+  "performance_table": [
+    {
+      "algorithm": "BFS",
+      "task": "source=United_States",
+      "time_s": 0.020888,
+      "mem_kb": 281.31
+    },
+    {
+      "algorithm": "BFS",
+      "task": "source=Science",
+      "time_s": 0.027501,
+      "mem_kb": 281.03
+    },
+    {
+      "algorithm": "BFS",
+      "task": "source=Africa",
+      "time_s": 0.017023,
+      "mem_kb": 281.74
+    },
+    {
+      "algorithm": "DFS",
+      "task": "source=United_States",
+      "time_s": 1.837479,
+      "mem_kb": 16992.15
+    },
+    {
+      "algorithm": "DFS",
+      "task": "source=Science",
+      "time_s": 2.016166,
+      "mem_kb": 17102.1
+    },
+    {
+      "algorithm": "DFS",
+      "task": "source=Africa",
+      "time_s": 1.928263,
+      "mem_kb": 16998.3
+    },
+    {
+      "algorithm": "Dijkstra",
+      "task": "United_States->Africa",
+      "time_s": 0.241024,
+      "mem_kb": 19135.14
+    },
+    {
+      "algorithm": "Dijkstra",
+      "task": "Science->Philosophy",
+      "time_s": 0.275929,
+      "mem_kb": 18900.82
+    },
+    {
+      "algorithm": "Dijkstra",
+      "task": "Mathematics->Music",
+      "time_s": 0.247149,
+      "mem_kb": 18900.88
+    },
+    {
+      "algorithm": "Dijkstra",
+      "task": "Europe->Brazil",
+      "time_s": 0.251024,
+      "mem_kb": 18900.88
+    },
+    {
+      "algorithm": "Dijkstra",
+      "task": "Film->Science",
+      "time_s": 0.242949,
+      "mem_kb": 18900.88
+    },
+    {
+      "algorithm": "Bellman-Ford",
+      "task": "United_States->Driving_on_the_left_or_right",
+      "time_s": 0.026487,
+      "mem_kb": 1052.77
+    },
+    {
+      "algorithm": "Bellman-Ford",
+      "task": "neg_no_cycle_BF_A->BF_D",
+      "time_s": 0.00023,
+      "mem_kb": 1.33
+    },
+    {
+      "algorithm": "Bellman-Ford",
+      "task": "neg_cycle_detection",
+      "time_s": 0.000138,
+      "mem_kb": 0.9
+    }
+  ]
+}
