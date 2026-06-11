@@ -1,8 +1,12 @@
 # Projeto de Teoria dos Grafos — 2026.1
-**CESAR School**
 
 Projeto desenvolvido em duas partes: a Parte 1 modela a rede de aeroportos brasileiros e a Parte 2 analisa o dataset Wikispeedia (navegação entre artigos da Wikipedia). Ambas implementam BFS, DFS, Dijkstra e Bellman-Ford do zero, sem bibliotecas de algoritmos de grafos.
 
+<p style="text-align: center; text-decoration: none;">
+  <a href="https://docs.google.com/document/d/136Mk8A-y2R1rPV2OJhQLaMYgAPZscZBIpf1UU3Nzo5A/edit?usp=sharing" style="text-decoration: none;">
+    <span>🔗 Relatório </span>
+  </a>
+</p>
 ---
 
 ## Estrutura do Repositório
