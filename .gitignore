@@ -1,0 +1,29 @@
+# Dependências e builds
+node_modules/
+dist/
+.venv/
+venv/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Dados grandes (não versionar)
+web/public/graph_data.json
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Arquivos comprimidos
+*.rar
+*.zip
+*.tar.gz
